@@ -1,7 +1,7 @@
 
 {
   "name": "nodejs-mobile-react-native",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Node.js for Mobile Apps React Native plugin",
   "main": "index.js",
   "scripts": {
@@ -11,10 +11,19 @@
     "react-native",
     "mobile",
     "nodejs",
-    "node.js"
+    "node.js",
+    "nodejs-mobile"
   ],
   "author": "janeasystems",
   "license": "MIT",
+  "homepage": "https://code.janeasystems.com/nodejs-mobile",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janeasystems/nodejs-mobile-react-native"
+  },
+  "bugs": {
+    "url": "https://github.com/janeasystems/nodejs-mobile/issues"
+  },
   "peerDependencies": {
     "react-native": "^0.48.0"
   },
