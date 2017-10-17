@@ -6,6 +6,8 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.Arguments;
 import javax.annotation.Nullable;
 import android.util.Log;
@@ -98,12 +100,30 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
     return "RNNodeJsMobile";
   }
 
+  // Extracts the option to redirect stdout and stderr to logcat
+  private boolean extractRedirectOutputToLogcatOption(ReadableMap options)
+  {
+    final String OPTION_NAME = "redirectOutputToLogcat";
+    if( (options != null) &&
+        options.hasKey(OPTION_NAME) &&
+        !options.isNull(OPTION_NAME) &&
+        (options.getType(OPTION_NAME) == ReadableType.Boolean)
+      ) {
+      return options.getBoolean(OPTION_NAME);
+    } else {
+      // By default, we redirect the process' stdout and stderr to show in logcat
+      return true;
+    }
+  }
+
   @ReactMethod
-  public void startNodeWithScript(String script) throws Exception {
-    // A new module instance may have been created due to hot reload.
+  public void startNodeWithScript(String script, ReadableMap options) throws Exception {
+    // A New module instance may have been created due to hot reload.
     _instance = this;
-    if (!_startedNodeAlready) {
+    if(!_startedNodeAlready) {
       _startedNodeAlready = true;
+
+      final boolean redirectOutputToLogcat = extractRedirectOutputToLogcatOption(options);
       final String scriptToRun = new String(script);
 
       new Thread(new Runnable() {
@@ -114,7 +134,8 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
             "-e",
             scriptToRun
             },
-            builtinModulesPath
+            builtinModulesPath,
+            redirectOutputToLogcat
           );
         }
       }).start();
@@ -122,11 +143,13 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void startNodeProject(boolean deleteandcopy) throws Exception{
-    // A new module instance may have been created due to hot reload.
+  public void startNodeProject(ReadableMap options) throws Exception{
+    // A New module instance may have been created due to hot reload.
     _instance = this;
-    if (!_startedNodeAlready) {
+    if(!_startedNodeAlready) {
       _startedNodeAlready = true;
+
+      final boolean redirectOutputToLogcat = extractRedirectOutputToLogcatOption(options);
 
       new Thread(new Runnable() {
         @Override
@@ -135,7 +158,8 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
           startNodeWithArguments(new String[]{"node",
             nodeJsProjectPath + "/main.js"
             },
-            builtinModulesPath
+            builtinModulesPath,
+            redirectOutputToLogcat
           );
         }
       }).start();
@@ -147,6 +171,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
     notifyNode(msg);
   }
 
+  // Sends an event through the App Event Emitter.
   private void sendEvent(String eventName,
                          @Nullable WritableMap params) {
     reactContext
@@ -154,6 +179,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
       .emit(eventName, params);
   }
 
+  // Called from JNI when node sends a message through the bridge.
   public static void sendMessageBackToReact(String msg) {
     if (_instance != null) {
       final RNNodeJsMobileModule _moduleInstance = _instance;
@@ -169,7 +195,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
     }
   }
 
-  public native Integer startNodeWithArguments(String[] arguments, String modulesPath);
+  public native Integer startNodeWithArguments(String[] arguments, String modulesPath, boolean option_redirectOutputToLogcat);
 
   public native void notifyNode(String msg);
 
@@ -211,6 +237,8 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
       deleteFolderRecursively(trash);
     }
   }
+
+  // Recursively deletes a folder
   private static boolean deleteFolderRecursively(File file) {
     try {
       boolean res = true;
@@ -291,7 +319,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
     return lines;
   }
 
-  // Adapted from https://stackoverflow.com/a/22903693
+  // Recursively copies contents of a folder in assets to a path
   private static void copyAssetFolder(String fromAssetPath, String toPath) throws IOException {
     String[] files = assetManager.list(fromAssetPath);
     boolean res = true;
@@ -320,6 +348,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
     out = null;
   }
 
+  // Copy file from an input stream to an output stream
   private static void copyFile(InputStream in, OutputStream out) throws IOException {
     byte[] buffer = new byte[1024];
     int read;

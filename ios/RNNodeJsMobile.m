@@ -62,7 +62,7 @@ RCT_EXPORT_METHOD(sendMessage:(NSString *)script)
 }
 
 
-RCT_EXPORT_METHOD(startNodeWithScript:(NSString *)script)
+RCT_EXPORT_METHOD(startNodeWithScript:(NSString *)script options:(NSDictionary *)options)
 {
   if(![NodeRunner sharedInstance].startedNodeAlready)
   {
@@ -77,7 +77,7 @@ RCT_EXPORT_METHOD(startNodeWithScript:(NSString *)script)
   }
 }
 
-RCT_EXPORT_METHOD(startNodeProject:(BOOL)deleteandcopy)
+RCT_EXPORT_METHOD(startNodeProject:(NSDictionary *)options)
 {
   if(![NodeRunner sharedInstance].startedNodeAlready)
   {

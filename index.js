@@ -8,11 +8,14 @@ class MyEmitter extends EventEmitter {}
 MyEmitter.prototype.send=function(msg) {
   RNNodeJsMobile.sendMessage(msg);
 };
-const start=function() {
-  RNNodeJsMobile.startNodeProject(true);
+
+const start=function(options) {
+  options = options || {};
+  RNNodeJsMobile.startNodeProject(options);
 };
-const startWithScript=function(script) {
-  RNNodeJsMobile.startNodeWithScript(script);
+const startWithScript=function(script, options) {
+  options = options || {};
+  RNNodeJsMobile.startNodeWithScript(script, options);
 }
 
 const channel = new MyEmitter();

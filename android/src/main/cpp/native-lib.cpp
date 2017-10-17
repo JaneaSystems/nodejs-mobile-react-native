@@ -104,7 +104,8 @@ Java_com_janeasystems_rn_1nodejs_1mobile_RNNodeJsMobileModule_startNodeWithArgum
         JNIEnv *env,
         jobject /* this */,
         jobjectArray arguments,
-        jstring modulesPath) {
+        jstring modulesPath,
+        jboolean option_redirectOutputToLogcat) {
 
     //Set the builtin_modules path to NODE_PATH.
     const char* path_path = env->GetStringUTFChars(modulesPath, 0);
@@ -150,8 +151,10 @@ Java_com_janeasystems_rn_1nodejs_1mobile_RNNodeJsMobileModule_startNodeWithArgum
     cacheEnvPointer=env;
 
     //Start threads to show stdout and stderr in logcat.
-    if (start_redirecting_stdout_stderr()==-1) {
-        __android_log_write(ANDROID_LOG_ERROR, ADBTAG, "Couldn't start redirecting stdout and stderr to logcat.");
+    if (option_redirectOutputToLogcat) {
+        if (start_redirecting_stdout_stderr()==-1) {
+            __android_log_write(ANDROID_LOG_ERROR, ADBTAG, "Couldn't start redirecting stdout and stderr to logcat.");
+        }
     }
 
     //Start node, with argc and argv.
