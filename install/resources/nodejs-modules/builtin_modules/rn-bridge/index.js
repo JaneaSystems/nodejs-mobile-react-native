@@ -10,7 +10,9 @@ MyEmitter.prototype.send=function(msg) {
 const channel = new MyEmitter();
 
 var myListener = mybridgeaddon.registerListener( function(msg) {
-  channel.emit('message', msg);
+  setImmediate( () => {
+    channel.emit('message', msg);
+  });
 });
 
 exports.channel = channel;
