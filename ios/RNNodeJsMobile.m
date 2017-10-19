@@ -6,6 +6,9 @@
 
 @implementation RNNodeJsMobile
 
+NSString* const BUILTIN_MODULES_RESOURCE_PATH = @"builtin_modules";
+NSString* const NODEJS_PROJECT_RESOURCE_PATH = @"nodejs-project";
+
 @synthesize bridge = _bridge;
 
 - (dispatch_queue_t)methodQueue
@@ -39,7 +42,7 @@ RCT_EXPORT_METHOD(sendMessage:(NSString *)script)
 
 -(void)callStartNodeWithScript:(NSString *)script
 {
-  NSString* builtinModulesPath = [[NSBundle mainBundle] pathForResource:@"builtin_modules" ofType:@""];
+  NSString* builtinModulesPath = [[NSBundle mainBundle] pathForResource:BUILTIN_MODULES_RESOURCE_PATH ofType:@""];
   NSArray* nodeArguments = [NSArray arrayWithObjects:
                             @"node",
                             @"-e",
@@ -49,10 +52,10 @@ RCT_EXPORT_METHOD(sendMessage:(NSString *)script)
   [[NodeRunner sharedInstance] startEngineWithArguments:nodeArguments:builtinModulesPath];
 }
 
--(void)callStartNodeProject
+-(void)callStartNodeProject:(NSString *)mainFileName
 {
-  NSString* builtinModulesPath = [[NSBundle mainBundle] pathForResource:@"builtin_modules" ofType:@""];
-  NSString* srcPath = [[NSBundle mainBundle] pathForResource:@"nodejs-project/main" ofType:@"js"];
+  NSString* builtinModulesPath = [[NSBundle mainBundle] pathForResource:BUILTIN_MODULES_RESOURCE_PATH ofType:@""];
+  NSString* srcPath = [[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"%@/%@", NODEJS_PROJECT_RESOURCE_PATH, mainFileName] ofType:@""];
   NSArray* nodeArguments = [NSArray arrayWithObjects:
                             @"node",
                             srcPath,
@@ -77,7 +80,7 @@ RCT_EXPORT_METHOD(startNodeWithScript:(NSString *)script options:(NSDictionary *
   }
 }
 
-RCT_EXPORT_METHOD(startNodeProject:(NSDictionary *)options)
+RCT_EXPORT_METHOD(startNodeProject:(NSString *)mainFileName options:(NSDictionary *)options)
 {
   if(![NodeRunner sharedInstance].startedNodeAlready)
   {
@@ -85,10 +88,10 @@ RCT_EXPORT_METHOD(startNodeProject:(NSDictionary *)options)
     NSThread* nodejsThread = nil;
     nodejsThread = [[NSThread alloc]
       initWithTarget:self
-      selector:@selector(callStartNodeProject)
-      object:nil
+      selector:@selector(callStartNodeProject:)
+      object:mainFileName
     ];
-    [nodejsThread start];      
+    [nodejsThread start];
   }
 }
 

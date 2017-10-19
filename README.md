@@ -56,7 +56,7 @@ Then add this to your Application's main component's `componentWillMount` lifecy
 ```js
   componentWillMount()
   {
-    nodejs.start();
+    nodejs.start("main.js");
     nodejs.channel.addListener(
       "message",
       (msg) => {

@@ -9,9 +9,12 @@ MyEmitter.prototype.send=function(msg) {
   RNNodeJsMobile.sendMessage(msg);
 };
 
-const start=function(options) {
+const start=function(mainFileName, options) {
+  if (typeof mainFileName !== 'string') {
+    throw new Error('nodejs-mobile-react-native\'s start expects to receive the main .js entrypoint filename, e.g.: nodejs.start("main.js");');
+  }
   options = options || {};
-  RNNodeJsMobile.startNodeProject(options);
+  RNNodeJsMobile.startNodeProject(mainFileName, options);
 };
 const startWithScript=function(script, options) {
   options = options || {};
