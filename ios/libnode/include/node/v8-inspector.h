@@ -85,8 +85,6 @@ class V8_EXPORT V8ContextInfo {
   StringView auxData;
   bool hasMemoryOnConsole;
 
-  static int executionContextId(v8::Local<v8::Context> context);
-
  private:
   // Disallow copying and allocating this one.
   enum NotNullTagEnum { NotNullLiteral };
@@ -119,14 +117,6 @@ class V8_EXPORT V8InspectorSession {
  public:
   virtual ~V8InspectorSession() {}
 
-  // Cross-context inspectable values (DOM nodes in different worlds, etc.).
-  class V8_EXPORT Inspectable {
-   public:
-    virtual v8::Local<v8::Value> get(v8::Local<v8::Context>) = 0;
-    virtual ~Inspectable() {}
-  };
-  virtual void addInspectedObject(std::unique_ptr<Inspectable>) = 0;
-
   // Dispatching protocol messages.
   static bool canDispatchMethod(const StringView& method);
   virtual void dispatchProtocolMessage(const StringView& message) = 0;
@@ -146,17 +136,9 @@ class V8_EXPORT V8InspectorSession {
   virtual std::vector<std::unique_ptr<protocol::Debugger::API::SearchMatch>>
   searchInTextByLines(const StringView& text, const StringView& query,
                       bool caseSensitive, bool isRegex) = 0;
-
-  // Remote objects.
-  virtual std::unique_ptr<protocol::Runtime::API::RemoteObject> wrapObject(
-      v8::Local<v8::Context>, v8::Local<v8::Value>,
-      const StringView& groupName) = 0;
-  virtual bool unwrapObject(std::unique_ptr<StringBuffer>* error,
-                            const StringView& objectId, v8::Local<v8::Value>*,
-                            v8::Local<v8::Context>*,
-                            std::unique_ptr<StringBuffer>* objectGroup) = 0;
-  virtual void releaseObjectGroup(const StringView&) = 0;
 };
+
+enum class V8ConsoleAPIType { kClear, kDebug, kLog, kInfo, kWarning, kError };
 
 class V8_EXPORT V8InspectorClient {
  public:
@@ -189,8 +171,7 @@ class V8_EXPORT V8InspectorClient {
 
   virtual void installAdditionalCommandLineAPI(v8::Local<v8::Context>,
                                                v8::Local<v8::Object>) {}
-  virtual void consoleAPIMessage(int contextGroupId,
-                                 v8::Isolate::MessageErrorLevel level,
+  virtual void consoleAPIMessage(int contextGroupId, V8ConsoleAPIType,
                                  const StringView& message,
                                  const StringView& url, unsigned lineNumber,
                                  unsigned columnNumber, V8StackTrace*) {}
@@ -202,7 +183,6 @@ class V8_EXPORT V8InspectorClient {
   virtual void consoleTime(const StringView& title) {}
   virtual void consoleTimeEnd(const StringView& title) {}
   virtual void consoleTimeStamp(const StringView& title) {}
-  virtual void consoleClear(int contextGroupId) {}
   virtual double currentTimeMS() { return 0; }
   typedef void (*TimerCallback)(void*);
   virtual void startRepeatingTimer(double, TimerCallback, void* data) {}
@@ -224,8 +204,8 @@ class V8_EXPORT V8Inspector {
   virtual void resetContextGroup(int contextGroupId) = 0;
 
   // Various instrumentation.
-  virtual void idleStarted() = 0;
-  virtual void idleFinished() = 0;
+  virtual void willExecuteScript(v8::Local<v8::Context>, int scriptId) = 0;
+  virtual void didExecuteScript(v8::Local<v8::Context>) = 0;
 
   // Async stack traces instrumentation.
   virtual void asyncTaskScheduled(const StringView& taskName, void* task,

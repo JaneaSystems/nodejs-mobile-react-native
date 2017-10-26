@@ -7,24 +7,16 @@
 
 #include <fstream>
 #include <memory>
-#include <unordered_set>
 #include <vector>
-
-#include "libplatform/libplatform-export.h"
-#include "v8-platform.h"  // NOLINT(build/include)
+#include "v8-platform.h"
 
 namespace v8 {
-
-namespace base {
-class Mutex;
-}  // namespace base
-
 namespace platform {
 namespace tracing {
 
 const int kTraceMaxNumArgs = 2;
 
-class V8_PLATFORM_EXPORT TraceObject {
+class TraceObject {
  public:
   union ArgValue {
     bool as_bool;
@@ -37,22 +29,19 @@ class V8_PLATFORM_EXPORT TraceObject {
 
   TraceObject() {}
   ~TraceObject();
-  void Initialize(
-      char phase, const uint8_t* category_enabled_flag, const char* name,
-      const char* scope, uint64_t id, uint64_t bind_id, int num_args,
-      const char** arg_names, const uint8_t* arg_types,
-      const uint64_t* arg_values,
-      std::unique_ptr<v8::ConvertableToTraceFormat>* arg_convertables,
-      unsigned int flags);
+  void Initialize(char phase, const uint8_t* category_enabled_flag,
+                  const char* name, const char* scope, uint64_t id,
+                  uint64_t bind_id, int num_args, const char** arg_names,
+                  const uint8_t* arg_types, const uint64_t* arg_values,
+                  unsigned int flags);
   void UpdateDuration();
-  void InitializeForTesting(
-      char phase, const uint8_t* category_enabled_flag, const char* name,
-      const char* scope, uint64_t id, uint64_t bind_id, int num_args,
-      const char** arg_names, const uint8_t* arg_types,
-      const uint64_t* arg_values,
-      std::unique_ptr<v8::ConvertableToTraceFormat>* arg_convertables,
-      unsigned int flags, int pid, int tid, int64_t ts, int64_t tts,
-      uint64_t duration, uint64_t cpu_duration);
+  void InitializeForTesting(char phase, const uint8_t* category_enabled_flag,
+                            const char* name, const char* scope, uint64_t id,
+                            uint64_t bind_id, int num_args,
+                            const char** arg_names, const uint8_t* arg_types,
+                            const uint64_t* arg_values, unsigned int flags,
+                            int pid, int tid, int64_t ts, int64_t tts,
+                            uint64_t duration, uint64_t cpu_duration);
 
   int pid() const { return pid_; }
   int tid() const { return tid_; }
@@ -68,9 +57,6 @@ class V8_PLATFORM_EXPORT TraceObject {
   const char** arg_names() { return arg_names_; }
   uint8_t* arg_types() { return arg_types_; }
   ArgValue* arg_values() { return arg_values_; }
-  std::unique_ptr<v8::ConvertableToTraceFormat>* arg_convertables() {
-    return arg_convertables_;
-  }
   unsigned int flags() const { return flags_; }
   int64_t ts() { return ts_; }
   int64_t tts() { return tts_; }
@@ -86,12 +72,10 @@ class V8_PLATFORM_EXPORT TraceObject {
   const uint8_t* category_enabled_flag_;
   uint64_t id_;
   uint64_t bind_id_;
-  int num_args_ = 0;
+  int num_args_;
   const char* arg_names_[kTraceMaxNumArgs];
   uint8_t arg_types_[kTraceMaxNumArgs];
   ArgValue arg_values_[kTraceMaxNumArgs];
-  std::unique_ptr<v8::ConvertableToTraceFormat>
-      arg_convertables_[kTraceMaxNumArgs];
   char* parameter_copy_storage_ = nullptr;
   unsigned int flags_;
   int64_t ts_;
@@ -104,7 +88,7 @@ class V8_PLATFORM_EXPORT TraceObject {
   void operator=(const TraceObject&) = delete;
 };
 
-class V8_PLATFORM_EXPORT TraceWriter {
+class TraceWriter {
  public:
   TraceWriter() {}
   virtual ~TraceWriter() {}
@@ -119,7 +103,7 @@ class V8_PLATFORM_EXPORT TraceWriter {
   void operator=(const TraceWriter&) = delete;
 };
 
-class V8_PLATFORM_EXPORT TraceBufferChunk {
+class TraceBufferChunk {
  public:
   explicit TraceBufferChunk(uint32_t seq);
 
@@ -143,7 +127,7 @@ class V8_PLATFORM_EXPORT TraceBufferChunk {
   void operator=(const TraceBufferChunk&) = delete;
 };
 
-class V8_PLATFORM_EXPORT TraceBuffer {
+class TraceBuffer {
  public:
   TraceBuffer() {}
   virtual ~TraceBuffer() {}
@@ -179,37 +163,46 @@ enum TraceRecordMode {
   ECHO_TO_CONSOLE,
 };
 
-class V8_PLATFORM_EXPORT TraceConfig {
+class TraceConfig {
  public:
   typedef std::vector<std::string> StringList;
 
   static TraceConfig* CreateDefaultTraceConfig();
 
-  TraceConfig() : enable_systrace_(false), enable_argument_filter_(false) {}
+  TraceConfig()
+      : enable_sampling_(false),
+        enable_systrace_(false),
+        enable_argument_filter_(false) {}
   TraceRecordMode GetTraceRecordMode() const { return record_mode_; }
+  bool IsSamplingEnabled() const { return enable_sampling_; }
   bool IsSystraceEnabled() const { return enable_systrace_; }
   bool IsArgumentFilterEnabled() const { return enable_argument_filter_; }
 
   void SetTraceRecordMode(TraceRecordMode mode) { record_mode_ = mode; }
+  void EnableSampling() { enable_sampling_ = true; }
   void EnableSystrace() { enable_systrace_ = true; }
   void EnableArgumentFilter() { enable_argument_filter_ = true; }
 
   void AddIncludedCategory(const char* included_category);
+  void AddExcludedCategory(const char* excluded_category);
 
   bool IsCategoryGroupEnabled(const char* category_group) const;
 
  private:
   TraceRecordMode record_mode_;
+  bool enable_sampling_ : 1;
   bool enable_systrace_ : 1;
   bool enable_argument_filter_ : 1;
   StringList included_categories_;
+  StringList excluded_categories_;
 
   // Disallow copy and assign
   TraceConfig(const TraceConfig&) = delete;
   void operator=(const TraceConfig&) = delete;
 };
 
-class V8_PLATFORM_EXPORT TracingController {
+class TracingController
+    : public v8::TracingController {
  public:
   enum Mode { DISABLED = 0, RECORDING_MODE };
 
@@ -226,26 +219,20 @@ class V8_PLATFORM_EXPORT TracingController {
     ENABLED_FOR_ETW_EXPORT = 1 << 3
   };
 
-  TracingController();
-  ~TracingController();
+  TracingController() {}
   void Initialize(TraceBuffer* trace_buffer);
   const uint8_t* GetCategoryGroupEnabled(const char* category_group);
   static const char* GetCategoryGroupName(const uint8_t* category_enabled_flag);
-  uint64_t AddTraceEvent(
-      char phase, const uint8_t* category_enabled_flag, const char* name,
-      const char* scope, uint64_t id, uint64_t bind_id, int32_t num_args,
-      const char** arg_names, const uint8_t* arg_types,
-      const uint64_t* arg_values,
-      std::unique_ptr<v8::ConvertableToTraceFormat>* arg_convertables,
-      unsigned int flags);
+  uint64_t AddTraceEvent(char phase, const uint8_t* category_enabled_flag,
+                         const char* name, const char* scope, uint64_t id,
+                         uint64_t bind_id, int32_t num_args,
+                         const char** arg_names, const uint8_t* arg_types,
+                         const uint64_t* arg_values, unsigned int flags);
   void UpdateTraceEventDuration(const uint8_t* category_enabled_flag,
                                 const char* name, uint64_t handle);
 
   void StartTracing(TraceConfig* trace_config);
   void StopTracing();
-
-  void AddTraceStateObserver(Platform::TraceStateObserver* observer);
-  void RemoveTraceStateObserver(Platform::TraceStateObserver* observer);
 
  private:
   const uint8_t* GetCategoryGroupEnabledInternal(const char* category_group);
@@ -254,8 +241,6 @@ class V8_PLATFORM_EXPORT TracingController {
 
   std::unique_ptr<TraceBuffer> trace_buffer_;
   std::unique_ptr<TraceConfig> trace_config_;
-  std::unique_ptr<base::Mutex> mutex_;
-  std::unordered_set<Platform::TraceStateObserver*> observers_;
   Mode mode_ = DISABLED;
 
   // Disallow copy and assign

@@ -1,76 +1,42 @@
 // Copyright 2014 the V8 project authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+//     * Neither the name of Google Inc. nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef V8_LIBPLATFORM_LIBPLATFORM_H_
 #define V8_LIBPLATFORM_LIBPLATFORM_H_
 
-#include "libplatform/libplatform-export.h"
 #include "libplatform/v8-tracing.h"
-#include "v8-platform.h"  // NOLINT(build/include)
+#include "include/v8-platform.h"
 
 namespace v8 {
 namespace platform {
 
-enum class IdleTaskSupport { kDisabled, kEnabled };
-enum class InProcessStackDumping { kDisabled, kEnabled };
-
-enum class MessageLoopBehavior : bool {
-  kDoNotWait = false,
-  kWaitForWork = true
-};
-
-/**
- * Returns a new instance of the default v8::Platform implementation.
- *
- * The caller will take ownership of the returned pointer. |thread_pool_size|
- * is the number of worker threads to allocate for background jobs. If a value
- * of zero is passed, a suitable default based on the current number of
- * processors online will be chosen.
- * If |idle_task_support| is enabled then the platform will accept idle
- * tasks (IdleTasksEnabled will return true) and will rely on the embedder
- * calling v8::platform::RunIdleTasks to process the idle tasks.
- */
-V8_PLATFORM_EXPORT v8::Platform* CreateDefaultPlatform(
-    int thread_pool_size = 0,
-    IdleTaskSupport idle_task_support = IdleTaskSupport::kDisabled,
-    InProcessStackDumping in_process_stack_dumping =
-        InProcessStackDumping::kEnabled);
-
-/**
- * Pumps the message loop for the given isolate.
- *
- * The caller has to make sure that this is called from the right thread.
- * Returns true if a task was executed, and false otherwise. Unless requested
- * through the |behavior| parameter, this call does not block if no task is
- * pending. The |platform| has to be created using |CreateDefaultPlatform|.
- */
-V8_PLATFORM_EXPORT bool PumpMessageLoop(
-    v8::Platform* platform, v8::Isolate* isolate,
-    MessageLoopBehavior behavior = MessageLoopBehavior::kDoNotWait);
-
-V8_PLATFORM_EXPORT void EnsureEventLoopInitialized(v8::Platform* platform,
-                                                   v8::Isolate* isolate);
-
-/**
- * Runs pending idle tasks for at most |idle_time_in_seconds| seconds.
- *
- * The caller has to make sure that this is called from the right thread.
- * This call does not block if no task is pending. The |platform| has to be
- * created using |CreateDefaultPlatform|.
- */
-V8_PLATFORM_EXPORT void RunIdleTasks(v8::Platform* platform,
-                                     v8::Isolate* isolate,
-                                     double idle_time_in_seconds);
-
-/**
- * Attempts to set the tracing controller for the given platform.
- *
- * The |platform| has to be created using |CreateDefaultPlatform|.
- */
-V8_PLATFORM_EXPORT void SetTracingController(
-    v8::Platform* platform,
-    v8::platform::tracing::TracingController* tracing_controller);
+void SetTracingController(
+  v8::Platform* platform,
+  v8::platform::tracing::TracingController* tracing_controller);
 
 }  // namespace platform
 }  // namespace v8

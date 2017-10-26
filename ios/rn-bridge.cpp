@@ -232,13 +232,14 @@ napi_value Method_SendMessage(napi_env env, napi_callback_info info) {
 #define DECLARE_NAPI_METHOD(name, func)                          \
   { name, 0, func, 0, 0, 0, napi_default, 0 }
 
-void Init(napi_env env, napi_value exports, napi_value module, void* priv) {
+  napi_value Init(napi_env env, napi_value exports) {
     napi_status status;
     napi_property_descriptor properties[] = {
         DECLARE_NAPI_METHOD("sendMessage", Method_SendMessage),
         DECLARE_NAPI_METHOD("registerListener", Method_RegisterListener),
     };
-    status = napi_define_properties(env, exports, sizeof(properties) / sizeof(*properties), properties);
+    NAPI_CALL(env, napi_define_properties(env, exports, sizeof(properties) / sizeof(*properties), properties));
+    return exports;
 }
 
 void rn_bridge_notify(const char *message) {

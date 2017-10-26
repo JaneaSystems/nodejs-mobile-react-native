@@ -10,6 +10,8 @@
     'component%': 'static_library',   # NB. these names match with what V8 expects
     'msvs_multi_core_compile': '0',   # we do enable multicore compiles, but not using the V8 way
     'python%': 'python',
+    'node_engine%': 'v8',
+    'msvs_windows_target_platform_version': 'v10.0', # used for node_engine==chakracore
 
     'node_shared%': 'false',
     'force_dynamic_crt%': 0,
@@ -38,9 +40,11 @@
       ['GENERATOR=="ninja"', {
         'OBJ_DIR': '<(PRODUCT_DIR)/obj',
         'V8_BASE': '<(PRODUCT_DIR)/obj/deps/v8/src/libv8_base.a',
+        'CHAKRASHIM_BASE': '<(PRODUCT_DIR)/obj/deps/chakrashim/libchakrashim.a',
        }, {
          'OBJ_DIR%': '<(PRODUCT_DIR)/obj.target',
          'V8_BASE%': '<(PRODUCT_DIR)/obj.target/deps/v8/src/libv8_base.a',
+         'CHAKRASHIM_BASE': '<(PRODUCT_DIR)/obj.target/deps/chakrashim/libchakrashim.a',
       }],
       ['OS == "win"', {
         'os_posix': 0,
@@ -52,6 +56,7 @@
         'v8_postmortem_support%': 'true',
       }],
       ['OS== "mac"', {
+        'CHAKRASHIM_BASE': '<(PRODUCT_DIR)/libchakrashim.a',
         'OBJ_DIR%': '<(PRODUCT_DIR)/obj.target',
         'V8_BASE': '<(PRODUCT_DIR)/libv8_base.a',
       }],
@@ -68,7 +73,43 @@
     ],
   },
 
+  'conditions': [
+    ['node_engine=="v8"', {
+      'target_defaults': {
+        'defines': [
+          'NODE_ENGINE_V8',
+        ],
+      },
+      'variables': {
+        'node_engine_include_dir%': 'deps/v8/include'
+      },
+    }],
+    ['node_engine=="chakracore"', {
+      'target_defaults': {
+        'defines': [
+          'NODE_ENGINE_CHAKRACORE',
+        ],
+        'conditions': [
+          ['target_arch=="arm"', {
+            'msvs_windows_target_platform_version': '<(msvs_windows_target_platform_version)',
+          }],
+        ],
+      },
+      'variables': {
+        'node_engine_include_dir%': 'deps/chakrashim/include',
+        'conditions': [
+          ['OS == "win"', {
+            'node_engine_libs': '-lchakracore.lib',
+          }, {
+            'node_engine_libs': '',
+          }],
+        ],
+      },
+    }],
+  ],
+
   'target_defaults': {
+    'defines': ['NODE_ENGINE="<(node_engine)"'],
     'default_configuration': 'Release',
     'configurations': {
       'Debug': {
@@ -80,6 +121,9 @@
         'conditions': [
           ['target_arch=="x64"', {
             'msvs_configuration_platform': 'x64',
+          }],
+          ['target_arch=="arm"', {
+            'msvs_configuration_platform': 'ARM',
           }],
           ['OS=="aix"', {
             'cflags': [ '-gxcoff' ],
@@ -127,6 +171,9 @@
         'conditions': [
           ['target_arch=="x64"', {
             'msvs_configuration_platform': 'x64',
+          }],
+          ['target_arch=="arm"', {
+            'msvs_configuration_platform': 'ARM',
           }],
           ['OS=="solaris"', {
             # pull in V8's postmortem metadata
