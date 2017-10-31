@@ -99,3 +99,7 @@ cd android
 cd ..
 react-native run-android
 ```
+
+## Changelog
+
+Releases are documented in [CHANGELOG.md](https://github.com/janeasystems/nodejs-mobile-react-native/blob/unstable/CHANGELOG.md)
