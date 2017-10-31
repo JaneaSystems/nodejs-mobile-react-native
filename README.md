@@ -13,7 +13,7 @@ We have a [central repo](https://github.com/janeasystems/nodejs-mobile/issues) w
 
 ### iOS
 
-As currently only `arm64` binaries are available, you need a physical device to run the project, so you'll also have to sign the project.
+Universal binaries are included in the plugin, so you can run in both iOS simulators and devices.
 
 ### Android
 
