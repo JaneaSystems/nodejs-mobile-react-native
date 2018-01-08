@@ -25,7 +25,7 @@
     "url": "https://github.com/janeasystems/nodejs-mobile/issues"
   },
   "peerDependencies": {
-    "react-native": "^0.48.0"
+    "react-native": "^0.52.0"
   },
   "dependencies": {
     "ncp": "^2.0.0",
