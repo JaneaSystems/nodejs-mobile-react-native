@@ -13,6 +13,11 @@
     return dispatch_get_main_queue();
 }
 
++ (BOOL)requiresMainQueueSetup
+{
+    return NO;
+}
+
 - (id)init
 {
   self = [super init];
