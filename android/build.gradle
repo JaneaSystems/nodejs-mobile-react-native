@@ -41,7 +41,6 @@ android {
         main {
             jniLibs.srcDirs 'libnode/bin/'
         }
-        main.assets.srcDirs += '../../../nodejs-assets'
         main.assets.srcDirs += '../install/resources/nodejs-modules'
     }
     
@@ -57,4 +56,32 @@ repositories {
 dependencies {
     compile 'com.facebook.react:react-native:+'
 }
-  
+
+task GenerateNodeProjectAssetsLists {
+    description "Generates a list for runtime copying"
+
+    doLast{
+        String file_list = "";
+        String dir_list = "";
+
+        def assets_tree = fileTree(dir: "${rootProject.projectDir}/../nodejs-assets/")
+        assets_tree.include('nodejs-project/**') // Include the node project.
+        assets_tree.exclude('**/.*') // Exclude files and dirs starting with .
+        assets_tree.exclude('**/*~') // Exclude temporary files.
+        assets_tree.visit { assetFile ->
+            if (assetFile.isDirectory()) {
+                dir_list += "${assetFile.relativePath}\n"
+            } else {
+                file_list += "${assetFile.relativePath}\n"
+            }
+        }
+        def file_list_path = new File( "${rootProject.projectDir}/../nodejs-assets/file.list")
+        file_list_path.write file_list
+        def dir_list_path = new File( "${rootProject.projectDir}/../nodejs-assets/dir.list")
+        dir_list_path.write dir_list
+    }
+
+    project.android.sourceSets.main.assets.srcDirs+="${rootProject.projectDir}/../nodejs-assets/"
+}
+
+tasks.getByPath(":${project.name}:preBuild").dependsOn GenerateNodeProjectAssetsLists

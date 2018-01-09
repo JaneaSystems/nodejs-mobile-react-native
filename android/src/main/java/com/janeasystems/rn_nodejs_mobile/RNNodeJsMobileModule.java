@@ -4,37 +4,93 @@ package com.janeasystems.rn_nodejs_mobile;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.Callback;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.Arguments;
 import javax.annotation.Nullable;
 import android.util.Log;
 
-import android.app.Application;
-import java.util.Arrays;
-import java.util.List;
+import android.content.Context;
 import android.content.res.AssetManager;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
+
 import java.io.*;
+import java.util.*;
+import java.util.concurrent.Semaphore;
 
 public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
 
   private final ReactApplicationContext reactContext;
+  private static final String TAG = "NODEJS-RN";
+  private static final String NODEJS_PROJECT_DIR = "nodejs-project";
+  private static final String NODEJS_BUILTIN_MODULES = "nodejs-builtin_modules";
+  private static final String TRASH_DIR = "nodejs-project-trash";
+  private static final String SHARED_PREFS = "NODEJS_MOBILE_PREFS";
+  private static final String LAST_UPDATED_TIME = "NODEJS_MOBILE_APK_LastUpdateTime";
+
+  private static String trashDirPath;
+  private static String filesDirPath;
+  private static String nodeJsProjectPath;
+  private static String builtinModulesPath;
+
+  private static long lastUpdateTime = 1;
+  private static long previousLastUpdateTime = 0;
+  private static Semaphore initSemaphore = new Semaphore(1);
+  private static boolean initCompleted = false;
+
+  private static AssetManager assetManager;
 
   static {
     System.loadLibrary("nodejs-mobile-react-native-native-lib");
     System.loadLibrary("node");
   }
 
-  //To store the instance when node is started.
-  public static RNNodeJsMobileModule _instance=null;
+  // To store the instance when node is started.
+  public static RNNodeJsMobileModule _instance = null;
 
-  //We just want one instance of node running in the background.
-  public static boolean _startedNodeAlready=false;
+  // We just want one instance of node running in the background.
+  public static boolean _startedNodeAlready = false;
 
   public RNNodeJsMobileModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
+    filesDirPath = reactContext.getFilesDir().getAbsolutePath();
+
+    // The paths where we expect the node project assets to be at runtime.
+    nodeJsProjectPath = filesDirPath + "/" + NODEJS_PROJECT_DIR;
+    builtinModulesPath = filesDirPath + "/" + NODEJS_BUILTIN_MODULES;
+    trashDirPath = filesDirPath + "/" + TRASH_DIR;
+
+    asyncInit();
+  }
+
+  private void asyncInit() {
+    if (wasAPKUpdated()) {
+      try {
+        initSemaphore.acquire();
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            emptyTrash();
+            try {
+              copyNodeJsAssets();
+              initCompleted = true;
+            } catch (IOException e) {
+              throw new RuntimeException("Node assets copy failed", e);
+            }
+            initSemaphore.release();
+            emptyTrash();
+          }
+        }).start();
+      } catch (InterruptedException ie) {
+        initSemaphore.release();
+        ie.printStackTrace();
+      }
+    } else {
+      initCompleted = true;
+    }
   }
 
   @Override
@@ -43,115 +99,121 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void startNodeWithScript(String script)
-  {
-    // A New module instance may have been created due to hot reload.
-    _instance=this;
-    if( !_startedNodeAlready ) {
-      _startedNodeAlready=true;
-      final String scriptToRun=new String(script);
+  public void startNodeWithScript(String script) throws Exception {
+    // A new module instance may have been created due to hot reload.
+    _instance = this;
+    if (!_startedNodeAlready) {
+      _startedNodeAlready = true;
+      final String scriptToRun = new String(script);
+
       new Thread(new Runnable() {
         @Override
         public void run() {
-          //Copy the builtin-modules to data folder.
-          String modulesDir=getReactApplicationContext().getFilesDir().getAbsolutePath()+"/nodejs-builtin_modules";
-
-          //Recursevely delete paths that are from an incomplete copy.
-          File modulesDirReference=new File(modulesDir);
-          if (modulesDirReference.exists()) {
-            deleteFolderRecursively(new File(modulesDir));
-          }
-          //Copy the node project from assets into the application's data path.
-          copyAssetFolder(getReactApplicationContext().getAssets(), "builtin_modules", modulesDir);
-
+          waitForInit();
           startNodeWithArguments(new String[]{"node",
             "-e",
             scriptToRun
             },
-            modulesDir
+            builtinModulesPath
           );
         }
       }).start();
     }
   }
-  
+
   @ReactMethod
-  public void startNodeProject(boolean deleteandcopy)
-  {
-    // A New module instance may have been created due to hot reload.
-    _instance=this;
-    if( !_startedNodeAlready ) {
-      _startedNodeAlready=true;
+  public void startNodeProject(boolean deleteandcopy) throws Exception{
+    // A new module instance may have been created due to hot reload.
+    _instance = this;
+    if (!_startedNodeAlready) {
+      _startedNodeAlready = true;
+
       new Thread(new Runnable() {
         @Override
         public void run() {
-          //The path where we expect the node project to be at runtime.
-          String nodeDir=getReactApplicationContext().getFilesDir().getAbsolutePath()+"/nodejs-project";
-
-          //Recursevely delete paths that are from an incomplete copy.
-          File nodeDirReference=new File(nodeDir);
-          if (nodeDirReference.exists()) {
-            deleteFolderRecursively(new File(nodeDir));
-          }
-          //Copy the node project from assets into the application's data path.
-          copyAssetFolder(getReactApplicationContext().getAssets(), "nodejs-project", nodeDir);
-          
-          //Do the builtin-modules copy too.
-          String modulesDir=getReactApplicationContext().getFilesDir().getAbsolutePath()+"/nodejs-builtin_modules";
-
-          //Recursevely delete paths that are from an incomplete copy.
-          File modulesDirReference=new File(modulesDir);
-          if (modulesDirReference.exists()) {
-            deleteFolderRecursively(new File(modulesDir));
-          }
-          //Copy the node project from assets into the application's data path.
-          copyAssetFolder(getReactApplicationContext().getAssets(), "builtin_modules", modulesDir);
-
+          waitForInit();
           startNodeWithArguments(new String[]{"node",
-            nodeDir+"/main.js"
+            nodeJsProjectPath + "/main.js"
             },
-            modulesDir
+            builtinModulesPath
           );
         }
       }).start();
     }
   }
-  
+
   @ReactMethod
-  public void sendMessage(String msg)
-  {
+  public void sendMessage(String msg) {
     notifyNode(msg);
   }
-  
+
   private void sendEvent(String eventName,
-                       @Nullable WritableMap params) {
+                         @Nullable WritableMap params) {
     reactContext
       .getJSModule(RCTNativeAppEventEmitter.class)
       .emit(eventName, params);
   }
 
-  public static void sendMessageBackToReact(String msg)
-  {
-    if(_instance!=null) {
-      final RNNodeJsMobileModule _moduleInstance=_instance;
-      final String _msgToPass=new String(msg);
+  public static void sendMessageBackToReact(String msg) {
+    if (_instance != null) {
+      final RNNodeJsMobileModule _moduleInstance = _instance;
+      final String _msgToPass = new String(msg);
       new Thread(new Runnable() {
         @Override
         public void run() {
           WritableMap params = Arguments.createMap();
           params.putString("message", _msgToPass);
-          _moduleInstance.sendEvent("nodejs-mobile-react-native-message",params);
+          _moduleInstance.sendEvent("nodejs-mobile-react-native-message", params);
         }
       }).start();
     }
   }
 
   public native Integer startNodeWithArguments(String[] arguments, String modulesPath);
+
   public native void notifyNode(String msg);
 
+  private void waitForInit() {
+    if (!initCompleted) {
+      try {
+        initSemaphore.acquire();
+        initSemaphore.release();
+      } catch (InterruptedException ie) {
+        initSemaphore.release();
+        ie.printStackTrace();
+      }
+    }
+  }
+
+  private boolean wasAPKUpdated() {
+    SharedPreferences prefs = this.reactContext.getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE);
+    this.previousLastUpdateTime = prefs.getLong(LAST_UPDATED_TIME, 0);
+
+    try {
+      PackageInfo packageInfo = this.reactContext.getPackageManager().getPackageInfo(this.reactContext.getPackageName(), 0);
+      this.lastUpdateTime = packageInfo.lastUpdateTime;
+    } catch (PackageManager.NameNotFoundException e) {
+      e.printStackTrace();
+    }
+    return (this.lastUpdateTime != this.previousLastUpdateTime);
+  }
+
+  private void saveLastUpdateTime() {
+    SharedPreferences prefs = this.reactContext.getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = prefs.edit();
+    editor.putLong(LAST_UPDATED_TIME, this.lastUpdateTime);
+    editor.commit();
+  }
+
+  private void emptyTrash() {
+    File trash = new File(RNNodeJsMobileModule.trashDirPath);
+    if (trash.exists()) {
+      deleteFolderRecursively(trash);
+    }
+  }
   private static boolean deleteFolderRecursively(File file) {
     try {
-      boolean res=true;
+      boolean res = true;
       for (File childFile : file.listFiles()) {
         if (childFile.isDirectory()) {
           res &= deleteFolderRecursively(childFile);
@@ -165,53 +227,97 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
       e.printStackTrace();
       return false;
     }
-	}
+  }
 
-  //Adapted from https://stackoverflow.com/a/22903693
-  private static boolean copyAssetFolder(AssetManager assetManager,
-      String fromAssetPath, String toPath) {
-    try {
-      String[] files = assetManager.list(fromAssetPath);
-      boolean res = true;
+  private void copyNodeJsAssets() throws IOException {
+    assetManager = getReactApplicationContext().getAssets();
 
-      if (files.length==0) {
-        //If it's a file, it won't have any assets "inside" it.
-        res &= copyAsset(assetManager, 
-                fromAssetPath,
-                toPath);
-      } else {
-        new File(toPath).mkdirs();
-        for (String file : files)
-          res &= copyAssetFolder(assetManager, 
-                  fromAssetPath + "/" + file,
-                  toPath + "/" + file);
+    // If a previous project folder is present, move it to the trash.
+    File nodeDirReference = new File(nodeJsProjectPath);
+    if (nodeDirReference.exists()) {
+      File trash = new File(trashDirPath);
+      nodeDirReference.renameTo(trash);
+    }
+
+    // Load the nodejs project's folder and file lists.
+    ArrayList<String> dirs = readFileFromAssets("dir.list");
+    ArrayList<String> files = readFileFromAssets("file.list");
+
+    // Copy the nodejs project files to the application's data path.
+    if (dirs.size() > 0 && files.size() > 0) {
+      Log.d(TAG, "Node assets copy using pre-built lists");
+      for (String dir : dirs) {
+        new File(filesDirPath + "/" + dir).mkdirs();
       }
-      return res;
-    } catch (Exception e) {
+
+      for (String file : files) {
+        String src = file;
+        String dest = filesDirPath + "/" + file;
+        copyAsset(src, dest);
+      }
+    } else {
+      Log.d(TAG, "Node assets copy enumerating APK assets");
+      copyAssetFolder(NODEJS_PROJECT_DIR, nodeJsProjectPath);
+    }
+
+    // Do the builtin-modules copy too.
+    // If a previous built-in modules folder is present, delete it.
+    File modulesDirReference = new File(builtinModulesPath);
+    if (modulesDirReference.exists()) {
+      deleteFolderRecursively(modulesDirReference);
+    }
+
+    // Copy the nodejs built-in modules to the application's data path.
+    copyAssetFolder("builtin_modules", builtinModulesPath);
+
+    saveLastUpdateTime();
+    Log.d(TAG, "Node assets copy completed successfully");
+  }
+
+  private ArrayList<String> readFileFromAssets(String filename){
+    ArrayList lines = new ArrayList();
+    try {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open(filename)));
+      String line = reader.readLine();
+      while (line != null) {
+        lines.add(line);
+        line = reader.readLine();
+      }
+      reader.close();
+    } catch (IOException e) {
+      lines = new ArrayList();
       e.printStackTrace();
-      return false;
+    }
+    return lines;
+  }
+
+  // Adapted from https://stackoverflow.com/a/22903693
+  private static void copyAssetFolder(String fromAssetPath, String toPath) throws IOException {
+    String[] files = assetManager.list(fromAssetPath);
+    boolean res = true;
+
+    if (files.length == 0) {
+      // If it's a file, it won't have any assets "inside" it.
+      copyAsset(fromAssetPath, toPath);
+    } else {
+      new File(toPath).mkdirs();
+      for (String file : files)
+        copyAssetFolder(fromAssetPath + "/" + file, toPath + "/" + file);
     }
   }
 
-  private static boolean copyAsset(AssetManager assetManager,
-          String fromAssetPath, String toPath) {
-      InputStream in = null;
-      OutputStream out = null;
-      try {
-        in = assetManager.open(fromAssetPath);
-        new File(toPath).createNewFile();
-        out = new FileOutputStream(toPath);
-        copyFile(in, out);
-        in.close();
-        in = null;
-        out.flush();
-        out.close();
-        out = null;
-        return true;
-      } catch(Exception e) {
-          e.printStackTrace();
-          return false;
-      }
+  private static void copyAsset(String fromAssetPath, String toPath) throws IOException {
+    InputStream in = null;
+    OutputStream out = null;
+    in = assetManager.open(fromAssetPath);
+    new File(toPath).createNewFile();
+    out = new FileOutputStream(toPath);
+    copyFile(in, out);
+    in.close();
+    in = null;
+    out.flush();
+    out.close();
+    out = null;
   }
 
   private static void copyFile(InputStream in, OutputStream out) throws IOException {
