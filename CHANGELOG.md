@@ -6,14 +6,33 @@
 </tr>
 <tr>
 <td>
+<a href="#0.1.3">0.1.3</a><br/>
 <a href="#0.1.2">0.1.2</a><br/>
 <a href="#0.1.1">0.1.1</a><br/>
 </td>
 </tr>
 </table>
 
+<a id="0.1.3"></a>
+## 2018-01-16, Version 0.1.3 (Current)
+
+### Notable Changes
+
+* Breaking change:
+  - The `start` function from the plugin now takes the node entrypoint filename as a mandatory argument. This means current `react-native` project will have to update every `start()` call to `start('main.js')` to maintain behaviour.
+* Updates `react-native` dependency version to `0.52`.
+* Optimizes assets copy.
+* Adds option argument to disable redirecting `stdout` and `stderr` to logcat.
+
+### Commits
+
+* [[`6de9bb6`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/6de9bb674e1d513547fcba2a62f0a91b556ea1d5)] - plugin: node.js entrypoint filename as argument (Jaime Bernardo)
+* [[`b7f145d`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/b7f145d9945df4794f02ef1a98529b623df93958)] - plugin: Add options argument to start methods (Jaime Bernardo)
+* [[`ae837b2`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/ae837b29c928bdd964db79abff06ddf925af097a)] - android: optimize assets copy (Enrico Giordani)
+* [[`c32ace3`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/c32ace3e432f9ee29f5c05964f12c966611a5ddf)] - rn: add requiresMainQueueSetup and update to 0.52 (Rayron Victor)
+
 <a id="0.1.2"></a>
-## 2017-10-31, Version 0.1.2 (Current)
+## 2017-10-31, Version 0.1.2
 
 ### Notable Changes
 
@@ -24,7 +43,6 @@
 
 ### Commits
 
-* docs: add CHANGELOG.md to document releases (Jaime Bernardo)
 * [[`3c5b16e`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/3c5b16e9a8a2b3eba3f513ad310adc433e0732d3)] - docs: Add mention to simulator support in README (Jaime Bernardo)
 * [[`7069d4b`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/7069d4bd84d66c264eda7ea99599ef3957b36de9)] - core: update nodejs-mobile v0.1.3 (Jaime Bernardo)
 * [[`70c9ac3`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/70c9ac3798ca1fa06447ffb5430a1ba7259bccbc)] - bridge: emit message event inside a setImmediate (Jaime Bernardo)
