@@ -8,6 +8,7 @@
 
 NSString* const BUILTIN_MODULES_RESOURCE_PATH = @"builtin_modules";
 NSString* const NODEJS_PROJECT_RESOURCE_PATH = @"nodejs-project";
+NSString* nodePath;
 
 @synthesize bridge = _bridge;
 
@@ -28,6 +29,12 @@ NSString* const NODEJS_PROJECT_RESOURCE_PATH = @"nodejs-project";
   {
     [[NodeRunner sharedInstance] setCurrentRNNodeJsMobile:self];
   }
+  
+  NSString* builtinModulesPath = [[NSBundle mainBundle] pathForResource:BUILTIN_MODULES_RESOURCE_PATH ofType:@""];
+  nodePath = [[NSBundle mainBundle] pathForResource:NODEJS_PROJECT_RESOURCE_PATH ofType:@""];
+  nodePath = [nodePath stringByAppendingString:@":"];
+  nodePath = [nodePath stringByAppendingString:builtinModulesPath];
+  
   return self;
 }
 
@@ -42,26 +49,24 @@ RCT_EXPORT_METHOD(sendMessage:(NSString *)script)
 
 -(void)callStartNodeWithScript:(NSString *)script
 {
-  NSString* builtinModulesPath = [[NSBundle mainBundle] pathForResource:BUILTIN_MODULES_RESOURCE_PATH ofType:@""];
   NSArray* nodeArguments = [NSArray arrayWithObjects:
                             @"node",
                             @"-e",
                             script,
                             nil
                             ];
-  [[NodeRunner sharedInstance] startEngineWithArguments:nodeArguments:builtinModulesPath];
+  [[NodeRunner sharedInstance] startEngineWithArguments:nodeArguments:nodePath];
 }
 
 -(void)callStartNodeProject:(NSString *)mainFileName
 {
-  NSString* builtinModulesPath = [[NSBundle mainBundle] pathForResource:BUILTIN_MODULES_RESOURCE_PATH ofType:@""];
   NSString* srcPath = [[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"%@/%@", NODEJS_PROJECT_RESOURCE_PATH, mainFileName] ofType:@""];
   NSArray* nodeArguments = [NSArray arrayWithObjects:
                             @"node",
                             srcPath,
                             nil
                             ];
-  [[NodeRunner sharedInstance] startEngineWithArguments:nodeArguments:builtinModulesPath];
+  [[NodeRunner sharedInstance] startEngineWithArguments:nodeArguments:nodePath];
 }
 
 

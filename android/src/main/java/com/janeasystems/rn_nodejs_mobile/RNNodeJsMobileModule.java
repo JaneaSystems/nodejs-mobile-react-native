@@ -134,7 +134,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
             "-e",
             scriptToRun
             },
-            builtinModulesPath,
+            nodeJsProjectPath + ":" + builtinModulesPath,
             redirectOutputToLogcat
           );
         }
@@ -158,7 +158,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
           startNodeWithArguments(new String[]{"node",
             nodeJsProjectPath + "/" + mainFileName
             },
-            builtinModulesPath,
+            nodeJsProjectPath + ":" + builtinModulesPath,
             redirectOutputToLogcat
           );
         }
