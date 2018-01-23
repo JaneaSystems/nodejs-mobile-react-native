@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.3.1'
+        classpath 'com.android.tools.build:gradle:2.2.3'
     }
 }
 
@@ -27,7 +27,7 @@ android {
             }
         }
         ndk {
-            abiFilters "armeabi-v7a", "x86"
+            abiFilters = project(":app").android.defaultConfig.ndk.abiFilters
         }
     }
     
@@ -85,3 +85,151 @@ task GenerateNodeProjectAssetsLists {
 }
 
 tasks.getByPath(":${project.name}:preBuild").dependsOn GenerateNodeProjectAssetsLists
+
+import org.gradle.internal.os.OperatingSystem;
+
+if ("1".equals(System.getenv('NODEJS_MOBILE_BUILD_NATIVE_MODULES'))) {
+    task CleanNPMTempBuildDir (type: Delete) {
+        delete "${rootProject.buildDir}/nodejs-native-assets-temp-build/"
+    }
+    
+    android.defaultConfig.ndk.abiFilters.each { abi_name ->
+        String temp_arch = {
+            switch (abi_name) {
+                case 'armeabi-v7a':
+                    'arm'
+                    break
+                case 'arm64-v8a':
+                    'arm64'
+                    break
+                default:
+                    abi_name
+                    break
+            }
+        }()
+        String temp_cc_ver = '4.9';
+        String temp_dest_cpu;
+        String temp_v8_arch;
+        String temp_suffix;
+        String temp_toolchain_name;
+        switch ( temp_arch )
+        {
+            case 'arm':
+                temp_dest_cpu = "${temp_arch}"
+                temp_v8_arch = "${temp_arch}"
+                temp_suffix = "${temp_arch}-linux-androideabi"
+                temp_toolchain_name = "${temp_suffix}"
+                break
+            case 'x86':
+                temp_dest_cpu = 'ia32'
+                temp_v8_arch = 'ia32'
+                temp_suffix = 'i686-linux-android'
+                temp_toolchain_name = "${temp_arch}"
+                break
+            case 'x86_64':
+                temp_dest_cpu = 'x64'
+                temp_v8_arch = 'x64'
+                temp_suffix = "${temp_arch}-linux-android"
+                temp_toolchain_name = "${temp_arch}"
+                break
+            case 'arm64':
+                temp_dest_cpu = "${temp_arch}"
+                temp_v8_arch = "${temp_arch}"
+                temp_suffix = 'aarch64-linux-android'
+                temp_toolchain_name = 'aarch64'
+                break
+            default:
+                throw new GradleException("Unsupported architecture for nodejs-mobile native modules: ${temp_arch}")
+                break
+        }
+
+        String ndk_bundle_path = android.ndkDirectory
+        String standalone_toolchain = "${rootProject.buildDir}/standalone-toolchains/${temp_toolchain_name}"
+        String npm_toolchain_add_to_path = "${rootProject.buildDir}/bin"
+        String npm_toolchain_ar = "${standalone_toolchain}/bin/${temp_suffix}-ar"
+        String npm_toolchain_cc = "${standalone_toolchain}/bin/${temp_suffix}-clang"
+        String npm_toolchain_cxx = "${standalone_toolchain}/bin/${temp_suffix}-clang++"
+        String npm_toolchain_link = "${standalone_toolchain}/bin/${temp_suffix}-clang++"
+
+        String npm_gyp_defines = "target_arch=${temp_arch}"
+        npm_gyp_defines += " v8_target_arch=${temp_v8_arch}"
+        npm_gyp_defines += " android_target_arch=${temp_arch}"
+        if (OperatingSystem.current().isMacOsX()) {
+            npm_gyp_defines += " host_os=mac OS=android"
+        } else if (OperatingSystem.current().isLinux()) {
+            npm_gyp_defines += " host_os=linux OS=android"
+        } else {
+            throw new GradleException("Unsupported opperating system for nodejs-mobile native builds: ${OperatingSystem.current().getName()}")
+        }
+
+
+        task "CopyNodeProjectAssets${abi_name}" (type:Copy) {
+            dependsOn "CleanNPMTempBuildDir"
+            description = "Copying node assets to build native modules for ${abi_name}."
+            from "${rootProject.projectDir}/../nodejs-assets/nodejs-project/"
+            into "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
+        }
+
+        task "MakeToolchain${abi_name}" (type:Exec) {
+            dependsOn "CopyNodeProjectAssets${abi_name}"
+            description = "Building a native toolchain to compile nodejs-mobile native modules for ${abi_name}."
+            executable = "${ndk_bundle_path}/build/tools/make-standalone-toolchain.sh"
+            args "--toolchain=${temp_toolchain_name}-${temp_cc_ver}", "--arch=${temp_arch}", "--install-dir=${standalone_toolchain}", "--stl=libc++", "--force", "--platform=android-21"
+        }
+
+        task "BuildNpmModules${abi_name}" (type:Exec) {
+            dependsOn "MakeToolchain${abi_name}"
+            description = "Building native modules for ${abi_name}."
+            workingDir "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
+            commandLine 'npm', '--verbose', 'rebuild', '--build-from-source'
+            //environment ('PATH', "${npm_toolchain_add_to_path}" + System.getProperty("path.separator") + "${System.env.PATH}")
+            environment ('npm_config_node_engine', 'v8' )
+            environment ('npm_config_nodedir', "${project.projectDir}/libnode/" )
+            environment ('npm_config_arch', temp_arch)
+            environment ('npm_config_platform', 'android')
+            environment ('npm_config_format', 'make-android')
+            environment ('TOOLCHAIN',"${standalone_toolchain}")
+            environment ('AR',"${npm_toolchain_ar}")
+            environment ('CC',"${npm_toolchain_cc}")
+            environment ('CXX',"${npm_toolchain_cxx}")
+            environment ('LINK',"${npm_toolchain_link}")
+            environment ('GYP_DEFINES',"${npm_gyp_defines}")
+        }
+        task "CleanFinalNpmAssets${abi_name}" (type: Delete) {
+            delete "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/"
+        }
+        task "CopyBuiltNpmAssets${abi_name}" (type:Copy) {
+            dependsOn "BuildNpmModules${abi_name}"
+            dependsOn "CleanFinalNpmAssets${abi_name}"
+            description = "Copying node assets with build native modules for ${abi_name}."
+            from "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
+            into "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/"
+            includeEmptyDirs = false
+            include '**/*.node'
+            project.android.sourceSets.main.assets.srcDirs+="${rootProject.buildDir}/nodejs-native-assets/"
+        }
+
+        task "GenerateNodeNativeAssetsLists${abi_name}" {
+            dependsOn "CopyBuiltNpmAssets${abi_name}"
+            description "Generates a list for runtime copying"
+            doLast{
+                String file_list = "";
+                String dir_list = "";
+
+                def assets_tree = fileTree(dir: "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/" )
+                assets_tree.visit { assetFile ->
+                    if (assetFile.isDirectory()) {
+                    dir_list+="${assetFile.relativePath}\n"
+                    } else {
+                    file_list+="${assetFile.relativePath}\n"
+                    }
+                }
+                def file_list_path = new File( "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/file.list")
+                file_list_path.write file_list
+                def dir_list_path = new File( "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/dir.list")
+                dir_list_path.write dir_list
+            }
+        }
+        tasks.getByPath(":${project.name}:preBuild").dependsOn "GenerateNodeNativeAssetsLists${abi_name}"
+    }
+}

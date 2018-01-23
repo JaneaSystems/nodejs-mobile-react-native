@@ -31,11 +31,13 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
   private static final String TRASH_DIR = "nodejs-project-trash";
   private static final String SHARED_PREFS = "NODEJS_MOBILE_PREFS";
   private static final String LAST_UPDATED_TIME = "NODEJS_MOBILE_APK_LastUpdateTime";
+  private static final String BUILTIN_NATIVE_ASSETS_PREFIX = "nodejs-native-assets-";
 
   private static String trashDirPath;
   private static String filesDirPath;
   private static String nodeJsProjectPath;
   private static String builtinModulesPath;
+  private static String nativeAssetsPath;
 
   private static long lastUpdateTime = 1;
   private static long previousLastUpdateTime = 0;
@@ -64,6 +66,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
     nodeJsProjectPath = filesDirPath + "/" + NODEJS_PROJECT_DIR;
     builtinModulesPath = filesDirPath + "/" + NODEJS_BUILTIN_MODULES;
     trashDirPath = filesDirPath + "/" + TRASH_DIR;
+    nativeAssetsPath = BUILTIN_NATIVE_ASSETS_PREFIX + getCurrentABIName();
 
     asyncInit();
   }
@@ -195,6 +198,8 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
     }
   }
 
+  public native String getCurrentABIName();
+
   public native Integer startNodeWithArguments(String[] arguments, String modulesPath, boolean option_redirectOutputToLogcat);
 
   public native void notifyNode(String msg);
@@ -257,6 +262,29 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
     }
   }
 
+  private boolean copyNativeAssetsFrom() throws IOException {
+    // Load the additional asset folder and files lists
+    ArrayList<String> nativeDirs = readFileFromAssets(nativeAssetsPath + "/dir.list");
+    ArrayList<String> nativeFiles = readFileFromAssets(nativeAssetsPath + "/file.list");
+    // Copy additional asset files to project working folder
+    if (nativeFiles.size() > 0) {
+      Log.v(TAG, "Building folder hierarchy for " + nativeAssetsPath);
+      for (String dir : nativeDirs) {
+        new File(nodeJsProjectPath + "/" + dir).mkdirs();
+      }
+      Log.v(TAG, "Copying assets using file list for " + nativeAssetsPath);
+      for (String file : nativeFiles) {
+        String src = nativeAssetsPath + "/" + file;
+        String dest = nodeJsProjectPath + "/" + file;
+        copyAsset(src, dest);
+      }
+    } else {
+      Log.v(TAG, "No assets to copy from " + nativeAssetsPath);
+    }
+    return true;
+  }
+
+
   private void copyNodeJsAssets() throws IOException {
     assetManager = getReactApplicationContext().getAssets();
 
@@ -287,6 +315,8 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
       Log.d(TAG, "Node assets copy enumerating APK assets");
       copyAssetFolder(NODEJS_PROJECT_DIR, nodeJsProjectPath);
     }
+
+    copyNativeAssetsFrom();
 
     // Do the builtin-modules copy too.
     // If a previous built-in modules folder is present, delete it.
