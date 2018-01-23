@@ -10,6 +10,8 @@
     'component%': 'static_library',   # NB. these names match with what V8 expects
     'msvs_multi_core_compile': '0',   # we do enable multicore compiles, but not using the V8 way
     'python%': 'python',
+    'node_engine%': 'v8',
+    'msvs_windows_target_platform_version': 'v10.0', # used for node_engine==chakracore
 
     'node_shared%': 'false',
     'force_dynamic_crt%': 0,
@@ -38,9 +40,11 @@
       ['GENERATOR=="ninja"', {
         'OBJ_DIR': '<(PRODUCT_DIR)/obj',
         'V8_BASE': '<(PRODUCT_DIR)/obj/deps/v8/src/libv8_base.a',
+        'CHAKRASHIM_BASE': '<(PRODUCT_DIR)/obj/deps/chakrashim/libchakrashim.a',
        }, {
          'OBJ_DIR%': '<(PRODUCT_DIR)/obj.target',
          'V8_BASE%': '<(PRODUCT_DIR)/obj.target/deps/v8/src/libv8_base.a',
+         'CHAKRASHIM_BASE': '<(PRODUCT_DIR)/obj.target/deps/chakrashim/libchakrashim.a',
       }],
       ['OS == "win"', {
         'os_posix': 0,
@@ -51,7 +55,8 @@
         'os_posix': 1,
         'v8_postmortem_support%': 'true',
       }],
-      ['OS== "mac"', {
+      ['OS== "mac" or OS=="ios"', {
+        'CHAKRASHIM_BASE': '<(PRODUCT_DIR)/libchakrashim.a',
         'OBJ_DIR%': '<(PRODUCT_DIR)/obj.target',
         'V8_BASE': '<(PRODUCT_DIR)/libv8_base.a',
       }],
@@ -60,7 +65,7 @@
       }, {
         'OPENSSL_PRODUCT': 'libopenssl.a',
       }],
-      ['OS=="mac"', {
+      ['OS=="mac" or OS=="ios"', {
         'clang%': 1,
       }, {
         'clang%': 0,
@@ -68,7 +73,43 @@
     ],
   },
 
+  'conditions': [
+    ['node_engine=="v8"', {
+      'target_defaults': {
+        'defines': [
+          'NODE_ENGINE_V8',
+        ],
+      },
+      'variables': {
+        'node_engine_include_dir%': 'deps/v8/include'
+      },
+    }],
+    ['node_engine=="chakracore"', {
+      'target_defaults': {
+        'defines': [
+          'NODE_ENGINE_CHAKRACORE',
+        ],
+        'conditions': [
+          ['target_arch=="arm" or target_arch=="arm64"', {
+            'msvs_windows_target_platform_version': '<(msvs_windows_target_platform_version)',
+          }],
+        ],
+      },
+      'variables': {
+        'node_engine_include_dir%': 'deps/chakrashim/include',
+        'conditions': [
+          ['OS == "win"', {
+            'node_engine_libs': '-lchakracore.lib',
+          }, {
+            'node_engine_libs': '',
+          }],
+        ],
+      },
+    }],
+  ],
+
   'target_defaults': {
+    'defines': ['NODE_ENGINE="<(node_engine)"'],
     'default_configuration': 'Release',
     'configurations': {
       'Debug': {
@@ -81,11 +122,17 @@
           ['target_arch=="x64"', {
             'msvs_configuration_platform': 'x64',
           }],
+          ['target_arch=="arm"', {
+            'msvs_configuration_platform': 'ARM',
+          }],
+          ['target_arch=="arm64"', {
+            'msvs_configuration_platform': 'ARM64',
+          }],
           ['OS=="aix"', {
             'cflags': [ '-gxcoff' ],
             'ldflags': [ '-Wl,-bbigtoc' ],
           }],
-          ['OS == "android"', {
+          ['OS == "android" and node_shared!="true" and _type!="loadable_module"', {
             'cflags': [ '-fPIE' ],
             'ldflags': [ '-fPIE', '-pie' ]
           }],
@@ -128,14 +175,20 @@
           ['target_arch=="x64"', {
             'msvs_configuration_platform': 'x64',
           }],
+          ['target_arch=="arm"', {
+            'msvs_configuration_platform': 'ARM',
+          }],
+          ['target_arch=="arm64"', {
+            'msvs_configuration_platform': 'ARM64',
+          }],
           ['OS=="solaris"', {
             # pull in V8's postmortem metadata
             'ldflags': [ '-Wl,-z,allextract' ]
           }],
-          ['OS!="mac" and OS!="win"', {
+          ['OS!="mac" and OS != "ios" and OS!="win"', {
             'cflags': [ '-fno-omit-frame-pointer' ],
           }],
-          ['OS == "android"', {
+          ['OS == "android" and node_shared!="true" and _type!="loadable_module"', {
             'cflags': [ '-fPIE' ],
             'ldflags': [ '-fPIE', '-pie' ]
           }],
@@ -232,7 +285,7 @@
     },
     'msvs_disabled_warnings': [4351, 4355, 4800],
     'conditions': [
-      ['asan == 1 and OS != "mac"', {
+      ['asan == 1 and OS != "mac" and OS != "ios"', {
         'cflags+': [
           '-fno-omit-frame-pointer',
           '-fsanitize=address',
@@ -241,7 +294,7 @@
         'cflags!': [ '-fomit-frame-pointer' ],
         'ldflags': [ '-fsanitize=address' ],
       }],
-      ['asan == 1 and OS == "mac"', {
+      ['asan == 1 and ( OS == "mac" or OS == "ios" )', {
         'xcode_settings': {
           'OTHER_CFLAGS+': [
             '-fno-omit-frame-pointer',
@@ -346,11 +399,112 @@
         ],
       }],
       ['OS=="android"', {
+        'conditions': [
+          [ 'node_shared=="true"', {
+            'ldflags': [ '-fPIC' ],
+          }]
+        ],
         'target_conditions': [
           ['_toolset=="target"', {
             'defines': [ '_GLIBCXX_USE_C99_MATH' ],
             'libraries': [ '-llog' ],
           }],
+          [ '_type=="loadable_module"', {
+            'ldflags': [ '-fPIC' ],
+            'conditions': [
+              # While loading a native node module, Android needs to have a
+              # (NEEDED) entry for libnode.so, or it won't be able to locate
+              # referenced symbols.
+              # We link to the binary libraries that are distributed with the
+              # nodejs-mobile headers so the (NEEDED) entry is created
+              [ 'target_arch=="arm"', {
+                'libraries': ['>(node_root_dir)/bin/armeabi-v7a/libnode.so'],
+              }],
+              [ 'target_arch=="arm64"', {
+                'libraries': ['>(node_root_dir)/bin/arm64-v8a/libnode.so'],
+              }],
+              [ 'target_arch=="x86"', {
+                'libraries': ['>(node_root_dir)/bin/x86/libnode.so'],
+              }],
+              [ 'target_arch=="x86_64"', {
+                'libraries': ['>(node_root_dir)/bin/x86_64/libnode.so'],
+              }],
+            ],
+          }],
+        ],
+      }],
+      ['OS=="ios"', {
+        'defines': ['_DARWIN_USE_64_BIT_INODE=1'],
+        'xcode_settings': {
+          'ALWAYS_SEARCH_USER_PATHS': 'NO',
+          'GCC_CW_ASM_SYNTAX': 'NO',                # No -fasm-blocks
+          'GCC_DYNAMIC_NO_PIC': 'NO',               # No -mdynamic-no-pic
+                                                    # (Equivalent to -fPIC)
+          'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',        # -fno-exceptions
+          'GCC_ENABLE_CPP_RTTI': 'NO',              # -fno-rtti
+          'GCC_ENABLE_PASCAL_STRINGS': 'NO',        # No -mpascal-strings
+          'GCC_THREADSAFE_STATICS': 'NO',           # -fno-threadsafe-statics
+          'PREBINDING': 'NO',                       # No -Wl,-prebind
+          'IPHONEOS_DEPLOYMENT_TARGET': '9.0',      # -miphoneos-version-min=9.0
+          'USE_HEADERMAP': 'NO',
+          'OTHER_CFLAGS': [
+            '-fno-strict-aliasing',
+          ],
+          'WARNING_CFLAGS': [
+            '-Wall',
+            '-Wendif-labels',
+            '-W',
+            '-Wno-unused-parameter',
+          ],
+        },
+        'target_conditions': [
+          ['_type!="static_library"', {
+            'xcode_settings': {
+              'OTHER_LDFLAGS': [
+                '-Wl,-no_pie',
+                '-Wl,-search_paths_first',
+              ],
+            },
+          }],
+        ],
+        'conditions': [
+          ['target_arch=="ia32"', {
+            'xcode_settings': {'ARCHS': ['i386']},
+          }],
+          ['target_arch=="x64"', {
+            'xcode_settings': {'ARCHS': ['x86_64']},
+          }],
+          [ 'target_arch in "arm64 arm armv7s"', {
+            'xcode_settings': {
+              'OTHER_CFLAGS': [
+                '-fembed-bitcode'
+              ],
+              'OTHER_CPLUSPLUSFLAGS': [
+                '-fembed-bitcode'
+              ],
+            }
+          }],
+          [ 'target_arch=="arm64"', {
+            'xcode_settings': {'ARCHS': ['arm64']},
+          }],
+          [ 'target_arch=="arm"', {
+            'xcode_settings': {'ARCHS': ['armv7']},
+          }],
+          [ 'target_arch=="armv7s"', {
+            'xcode_settings': {'ARCHS': ['armv7s']},
+          }],
+          ['clang==1', {
+            'xcode_settings': {
+              'GCC_VERSION': 'com.apple.compilers.llvm.clang.1_0',
+              'CLANG_CXX_LANGUAGE_STANDARD': 'gnu++0x',  # -std=gnu++0x
+              'CLANG_CXX_LIBRARY': 'libc++',
+            },
+          }],
+          ['target_arch=="x64" or target_arch=="ia32"', {
+		    'xcode_settings': { 'SDKROOT': 'iphonesimulator'	},
+		   }, {
+		    'xcode_settings': { 'SDKROOT': 'iphoneos', 'ENABLE_BITCODE': 'YES'},
+		  }],
         ],
       }],
       ['OS=="mac"', {

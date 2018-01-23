@@ -1,6 +1,0 @@
-framework module libnode {
-  umbrella header "libnode.h"
-
-  export *
-  module * { export * }
-}

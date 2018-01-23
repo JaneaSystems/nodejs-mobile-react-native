@@ -47,10 +47,13 @@ if ( detectedConfigs && detectedConfigs.ios && detectedConfigs.ios.pbxprojPath)
     }
 
     //Create a Frameworks group and add it to the project's main Group
-    var FrameworksUUID = xcodeProject.pbxCreateGroup("Frameworks");
     var mainGroupUUID = xcodeProject.pbxProjectSection()[xcodeProject.getFirstProject().uuid].mainGroup;
-    xcodeProject.addToPbxGroup(FrameworksUUID,mainGroupUUID);
-
+    var frameworksGroup = xcodeProject.pbxGroupByName('Frameworks');
+    if (!frameworksGroup)
+    {
+      var frameworksUUID = xcodeProject.pbxCreateGroup("Frameworks");
+      xcodeProject.addToPbxGroup(frameworksUUID,mainGroupUUID);
+    }
     //Add an EmbedFrameworks build phase to the app's target
     var firstTargetUUID = xcodeProject.getFirstTarget().uuid;
     if(!xcodeProject.pbxEmbedFrameworksBuildPhaseObj(firstTargetUUID))
@@ -90,8 +93,17 @@ if ( detectedConfigs && detectedConfigs.ios && detectedConfigs.ios.pbxprojPath)
       }
     };
 
-    //Adds the libnode framework to the firstTarget (it's the main app target)
-    var frameworkPath="../node_modules/nodejs-mobile-react-native/ios/libnode.framework";
+    //Removes the old libnode.framework from the firstTarget, if it exists.
+    var oldFrameworkPath="../node_modules/nodejs-mobile-react-native/ios/libnode.framework";
+    if (xcodeProject.hasFile(oldFrameworkPath)) {
+      var deletedFrameworkFileRef=xcodeProject.removeFramework(
+        oldFrameworkPath,
+        {customFramework:true, embed:true, link: true, sign: true, target: firstTargetUUID}
+      );
+    }
+
+    //Adds the NodeMobile framework to the firstTarget (it's the main app target)
+    var frameworkPath="../node_modules/nodejs-mobile-react-native/ios/NodeMobile.framework";
     var frameworkFileRef=xcodeProject.addFramework(
       frameworkPath,
       {customFramework:true, embed:true, link: true, sign: true, target: firstTargetUUID}
@@ -103,7 +115,11 @@ if ( detectedConfigs && detectedConfigs.ios && detectedConfigs.ios.pbxprojPath)
     }
 
     //Create the resources group.
-    xcodeProject.pbxCreateGroup("Resources");
+    var resourcesGroup = xcodeProject.pbxGroupByName('Resources');
+    if (!resourcesGroup)
+    {
+      xcodeProject.pbxCreateGroup("Resources");
+    }
 
     //Adds the default node project as a resource to the first project, in the main group.
     xcodeProject.addResourceFile(

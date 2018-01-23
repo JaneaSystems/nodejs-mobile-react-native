@@ -1,5 +1,5 @@
 #include "NodeRunner.hpp"
-#include <libnode/node.hpp>
+#include <NodeMobile/NodeMobile.h>
 #include <string>
 #include "rn-bridge.h"
 
@@ -109,7 +109,7 @@ void rcv_message(char* msg) {
   }
   rn_register_bridge_cb(rcv_message);
   //Start node, with argc and argv.
-  node::Start(argument_count,argv);
+  node_start(argument_count, argv);
 }
 @end
 
