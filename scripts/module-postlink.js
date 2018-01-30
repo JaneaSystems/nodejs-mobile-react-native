@@ -148,6 +148,11 @@ if ( detectedConfigs && detectedConfigs.ios && detectedConfigs.ios.pbxprojPath)
     var rebuildNativeModulesBuildPhaseScript = `
 if [ "1" != "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then exit 0; fi
 set -e
+# Apply patches to the modules package.json
+PATCH_SCRIPT_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-react-native/scripts/ && pwd )"
+NODEJS_PROJECT_MODULES_DIR="$( cd "$CODESIGNING_FOLDER_PATH" && cd nodejs-project/node_modules/ && pwd )"
+node "$PATCH_SCRIPT_DIR"/patch-package.js $NODEJS_PROJECT_MODULES_DIR
+# Rebuild modules with right environment
 NODEJS_HEADERS_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-react-native/ios/libnode/ && pwd )"
 pushd $CODESIGNING_FOLDER_PATH/nodejs-project/
 if [ "$PLATFORM_NAME" == "iphoneos" ]

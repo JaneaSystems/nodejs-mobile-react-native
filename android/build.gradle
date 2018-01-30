@@ -57,14 +57,31 @@ dependencies {
     compile 'com.facebook.react:react-native:+'
 }
 
+
+task CleanNodeProjectTempAssetsFolder (type: Delete) {
+    description "Delete the temporary Node Project build folder."
+    delete "${rootProject.buildDir}/nodejs-assets/"
+}
+
+task CopyNodeProjectAssetsFolder (type:Copy) {
+    dependsOn "CleanNodeProjectTempAssetsFolder"
+    description "Copies the Node Project to a build folder for manipulation."
+    from "${rootProject.projectDir}/../nodejs-assets/nodejs-project"
+    into "${rootProject.buildDir}/nodejs-assets/nodejs-project/"
+    exclude '**/*~' // temporary files
+    exclude '**/.*' // files and dirs starting with .
+    exclude '**/*.gz' // gzip files will cause errors on aapt when merging assets.
+}
+
 task GenerateNodeProjectAssetsLists {
+    dependsOn "CopyNodeProjectAssetsFolder"
     description "Generates a list for runtime copying"
 
     doLast{
         String file_list = "";
         String dir_list = "";
 
-        def assets_tree = fileTree(dir: "${rootProject.projectDir}/../nodejs-assets/")
+        def assets_tree = fileTree(dir: "${rootProject.buildDir}/nodejs-assets/")
         assets_tree.include('nodejs-project/**') // Include the node project.
         assets_tree.exclude('**/.*') // Exclude files and dirs starting with .
         assets_tree.exclude('**/*~') // Exclude temporary files.
@@ -75,13 +92,13 @@ task GenerateNodeProjectAssetsLists {
                 file_list += "${assetFile.relativePath}\n"
             }
         }
-        def file_list_path = new File( "${rootProject.projectDir}/../nodejs-assets/file.list")
+        def file_list_path = new File( "${rootProject.buildDir}/nodejs-assets/file.list")
         file_list_path.write file_list
-        def dir_list_path = new File( "${rootProject.projectDir}/../nodejs-assets/dir.list")
+        def dir_list_path = new File( "${rootProject.buildDir}/nodejs-assets/dir.list")
         dir_list_path.write dir_list
     }
 
-    project.android.sourceSets.main.assets.srcDirs+="${rootProject.projectDir}/../nodejs-assets/"
+    project.android.sourceSets.main.assets.srcDirs+="${rootProject.buildDir}/nodejs-assets/"
 }
 
 tasks.getByPath(":${project.name}:preBuild").dependsOn GenerateNodeProjectAssetsLists
@@ -89,6 +106,13 @@ tasks.getByPath(":${project.name}:preBuild").dependsOn GenerateNodeProjectAssets
 import org.gradle.internal.os.OperatingSystem;
 
 if ("1".equals(System.getenv('NODEJS_MOBILE_BUILD_NATIVE_MODULES'))) {
+    task ApplyPatchScriptToModules (type:Exec) {
+        dependsOn "CopyNodeProjectAssetsFolder"
+        description "Apply patches to modules to improve compatibility."
+        commandLine 'node', "${project.projectDir}/../scripts/patch-package.js", "${rootProject.buildDir}/nodejs-assets/nodejs-project/node_modules/"
+    }
+    GenerateNodeProjectAssetsLists.dependsOn "ApplyPatchScriptToModules"
+
     task CleanNPMTempBuildDir (type: Delete) {
         delete "${rootProject.buildDir}/nodejs-native-assets-temp-build/"
     }
@@ -174,11 +198,18 @@ if ("1".equals(System.getenv('NODEJS_MOBILE_BUILD_NATIVE_MODULES'))) {
             dependsOn "CopyNodeProjectAssets${abi_name}"
             description = "Building a native toolchain to compile nodejs-mobile native modules for ${abi_name}."
             executable = "${ndk_bundle_path}/build/tools/make-standalone-toolchain.sh"
-            args "--toolchain=${temp_toolchain_name}-${temp_cc_ver}", "--arch=${temp_arch}", "--install-dir=${standalone_toolchain}", "--stl=libc++", "--force", "--platform=android-21"
+            args "--toolchain=${temp_toolchain_name}-${temp_cc_ver}", "--arch=${temp_arch}", "--install-dir=${standalone_toolchain}", "--stl=libc++", "--force", "--platform=android-22"
+        }
+
+        task "ApplyPatchScriptToModules${abi_name}" (type:Exec) {
+            dependsOn "CopyNodeProjectAssets${abi_name}"
+            description "Apply patches to modules to improve compatibility for ${abi_name}."
+            commandLine 'node', "${project.projectDir}/../scripts/patch-package.js", "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/node_modules/"
         }
 
         task "BuildNpmModules${abi_name}" (type:Exec) {
             dependsOn "MakeToolchain${abi_name}"
+            dependsOn "ApplyPatchScriptToModules${abi_name}"
             description = "Building native modules for ${abi_name}."
             workingDir "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
             commandLine 'npm', '--verbose', 'rebuild', '--build-from-source'
