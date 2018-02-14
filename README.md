@@ -19,6 +19,11 @@ Universal binaries are included in the plugin, so you can run in both iOS simula
 
 You may need to open your app's `/android` folder in `Android Studio`, so that it detects, downloads and cofigures requirements that might be missing, like the `NDK` and `CMake` to build the native code part of the project.
 
+You can also set the environment variable `ANDROID_NDK_HOME`, as in this example:
+```sh
+export ANDROID_NDK_HOME=/Users/username/Library/Android/sdk/ndk-bundle
+```
+
 ## Usage
 
 ### `Node.js` project
@@ -42,7 +47,33 @@ rn_bridge.channel.on('message', (msg) => {
 rn_bridge.channel.send("Node was initialized.");
 ```
 
-> The Node.js runtime accesses files through Unix-based pathnames, so in Android the node project is copied from the project's apk assets into the default application data folder at startup. In the future, we hope to provide the mechanisms so Node.js can access the files inside the apk.
+The Node.js runtime accesses files through Unix-based pathnames, so in Android the node project is copied from the project's apk assets into the default application data folder at startup, during the first run or after an update, under `nodejs-project/`.
+
+> Attention: Given the project folder will be overwritten after each application update, it should not be used for persistent storage.
+
+To expedite the process of extracting the assets files, instead of parsing the assets hierarchy, a list of files `file.list` and a list of folders `dir.list` are created when the application is compiled and then added to the application assets. On Android 6.x and older versions, this allows to work around a serious perfomance bug in the Android assets manager.
+
+#### Node Modules
+
+Node modules can be added to the project using `npm` inside `nodejs-assets/nodejs-project/`, as long as there's a `package.json` already present.
+
+#### Native Modules
+
+On Linux and macOS, there is experimental support for building modules that contain native code.
+
+The plugin automatically detects native modules inside your `nodejs-project` folder by searching for `.gyp` files. It's recommended to have the build prerequisites mentioned in `nodejs-mobile` for [Android](https://github.com/janeasystems/nodejs-mobile#prerequisites-to-build-the-android-library-on-linux-ubuntudebian) and [iOS](https://github.com/janeasystems/nodejs-mobile#prerequisites-to-build-the-ios-framework-library-on-macos). For Android it's also recommended that you set the `ANDROID_NDK_HOME` environment variable in your system.
+
+Building native modules can take a long time for Android, since it depends on building a standalone NDK toolchain for each required architecture. The resulting `.node` binaries are then included in the final application in a separate asset path for each architecture and the correct one will be chosen at runtime.
+
+While the plugin tries to detect automatically the presence of native modules, there's a way to override this detection and turn the native modules build process on or off, by creating the `nodejs-assets/BUILD_NATIVE_MODULES.txt` and setting its contents to `1` or `0`, respectively. This can be used to start your application like this:
+```sh
+echo "1" > nodejs-assets/BUILD_NATIVE_MODULES.txt
+react-native run-android
+```
+```sh
+echo "1" > nodejs-assets/BUILD_NATIVE_MODULES.txt
+react-native run-ios
+```
 
 ### `React-Native` application
 
