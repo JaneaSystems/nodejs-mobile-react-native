@@ -146,8 +146,18 @@ if ( detectedConfigs && detectedConfigs.ios && detectedConfigs.ios.pbxprojPath)
     //Adds a build phase to rebuild native modules
     var rebuildNativeModulesBuildPhaseName = 'Build NodeJS Mobile Native Modules';
     var rebuildNativeModulesBuildPhaseScript = `
-if [ "1" != "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then exit 0; fi
 set -e
+if [ -z "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then
+# If build native modules preference is not set, try to find .gyp files
+#to turn it on.
+gypfiles=($(find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -type f -name "*.gyp"))
+if [ \${#gypfiles[@]} -gt 0 ]; then
+  NODEJS_MOBILE_BUILD_NATIVE_MODULES=1
+else
+  NODEJS_MOBILE_BUILD_NATIVE_MODULES=0
+fi
+fi
+if [ "1" != "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then exit 0; fi
 # Apply patches to the modules package.json
 PATCH_SCRIPT_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-react-native/scripts/ && pwd )"
 NODEJS_PROJECT_MODULES_DIR="$( cd "$CODESIGNING_FOLDER_PATH" && cd nodejs-project/node_modules/ && pwd )"
@@ -180,6 +190,17 @@ popd
     //Adds a build phase to sign native modules
     var signNativeModulesBuildPhaseName = 'Sign NodeJS Mobile Native Modules';
     var signNativeModulesBuildPhaseScript = `
+set -e
+if [ -z "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then
+# If build native modules preference is not set, try to find .gyp files
+#to turn it on.
+gypfiles=($(find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -type f -name "*.gyp"))
+if [ \${#gypfiles[@]} -gt 0 ]; then
+  NODEJS_MOBILE_BUILD_NATIVE_MODULES=1
+else
+  NODEJS_MOBILE_BUILD_NATIVE_MODULES=0
+fi
+fi
 if [ "1" != "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then exit 0; fi
 /usr/bin/codesign --force --sign $EXPANDED_CODE_SIGN_IDENTITY --preserve-metadata=identifier,entitlements,flags --timestamp=none $(find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -type f -name "*.node")
 `
