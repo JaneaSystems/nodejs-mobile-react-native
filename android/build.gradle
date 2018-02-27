@@ -123,10 +123,58 @@ if (shouldRebuildNativeModules==null) {
 }
 
 if ("1".equals(shouldRebuildNativeModules)) {
+
+    String npmCommandName = 'npm';
+    String nodeCommandName = 'node';
+    if (OperatingSystem.current().isMacOsX()) {
+        // On macOS, npm's and node's locations may not be in the PATH environment variable if gradle is being run
+        // by Android Studio. We need npm to build native modules and node to run node-pre-gyp patches, so we use
+        // helper scripts that are created when the plugin is installed to run npm and node with the PATH members that
+        // were available during the plugin's install.
+        try {
+            def commandResult = exec {
+                commandLine 'command', '-v', 'npm'
+                ignoreExitValue = true
+            }
+            if ( commandResult.getExitValue() != 0 ) {
+                // If npm is not found by command, use the helper script.
+                logger.warn("Couldn't find npm in the PATH for building native modules. Will try to use a helper script.");
+                npmCommandName = '../build-native-modules-MacOS-helper-script-npm.sh';
+            }
+            commandResult = exec {
+                commandLine 'command', '-v', 'node'
+                ignoreExitValue = true
+            }
+            if ( commandResult.getExitValue() != 0 ) {
+                // If node is not found by command, use the helper script.
+                logger.warn("Couldn't find node in the PATH for building native modules. Will try to use a helper script.");
+                nodeCommandName = '../build-native-modules-MacOS-helper-script-node.sh';
+            }
+        } catch ( Exception e ) {
+            throw new GradleException('Something went wrong looking for npm and node by running "command".', e)
+        }
+    }
+
     task ApplyPatchScriptToModules (type:Exec) {
         dependsOn "CopyNodeProjectAssetsFolder"
         description "Apply patches to modules to improve compatibility."
-        commandLine 'node', "${project.projectDir}/../scripts/patch-package.js", "${rootProject.buildDir}/nodejs-assets/nodejs-project/node_modules/"
+        doFirst {
+            if (OperatingSystem.current().isMacOsX()) {
+                // Copy the helper script for calling node when building in Android Studio on macOS.
+                copy {
+                    from "${rootProject.projectDir}/../nodejs-assets/build-native-modules-MacOS-helper-script-node.sh"
+                    into "${rootProject.buildDir}/nodejs-assets/"
+                }
+            }
+        }
+        workingDir "${rootProject.buildDir}/nodejs-assets/nodejs-project/"
+        commandLine nodeCommandName, "${project.projectDir}/../scripts/patch-package.js", "${rootProject.buildDir}/nodejs-assets/nodejs-project/node_modules/"
+        doLast {
+            if (OperatingSystem.current().isMacOsX()) {
+                // Deletes the helper script so it doesn't get included in the APK.
+                delete "${rootProject.buildDir}/nodejs-assets/build-native-modules-MacOS-helper-script-node.sh"
+            }
+        }
     }
     GenerateNodeProjectAssetsLists.dependsOn "ApplyPatchScriptToModules"
 
@@ -199,8 +247,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
             throw new GradleException("Unsupported opperating system for nodejs-mobile native builds: ${OperatingSystem.current().getName()}")
         }
 
-
-        task "CopyNodeProjectAssets${abi_name}"{
+        task "CopyNodeProjectAssets${abi_name}" {
             description = "Copying node assets and apply patches to build native modules for ${abi_name}."
             inputs.files fileTree (
                 dir: "${rootProject.projectDir}/../nodejs-assets/nodejs-project/"
@@ -217,8 +264,20 @@ if ("1".equals(shouldRebuildNativeModules)) {
                     from "${rootProject.projectDir}/../nodejs-assets/nodejs-project/"
                     into "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
                 }
+                if (OperatingSystem.current().isMacOsX()) {
+                    // Copy the helper scripts for calling npm and node when building in Android Studio on macOS.
+                    copy {
+                        from "${rootProject.projectDir}/../nodejs-assets/build-native-modules-MacOS-helper-script-node.sh"
+                        into "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/"
+                    }
+                    copy {
+                        from "${rootProject.projectDir}/../nodejs-assets/build-native-modules-MacOS-helper-script-npm.sh"
+                        into "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/"
+                    }
+                }
                 exec {
-                    commandLine 'node', "${project.projectDir}/../scripts/patch-package.js", "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/node_modules/"
+                    workingDir "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
+                    commandLine nodeCommandName, "${project.projectDir}/../scripts/patch-package.js", "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/node_modules/"
                 }
                 new File("${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/copy.timestamp").text = "${new Date().format('yyyy-MM-dd HH:mm:ss')}"
             }
@@ -238,8 +297,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
             inputs.file "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/copy.timestamp"
             outputs.file "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
             workingDir "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
-            commandLine 'npm', '--verbose', 'rebuild', '--build-from-source'
-            //environment ('PATH', "${npm_toolchain_add_to_path}" + System.getProperty("path.separator") + "${System.env.PATH}")
+            commandLine npmCommandName, '--verbose', 'rebuild', '--build-from-source'
             environment ('npm_config_node_engine', 'v8' )
             environment ('npm_config_nodedir', "${project.projectDir}/libnode/" )
             environment ('npm_config_node_gyp', "${project.projectDir}/../../nodejs-mobile-gyp/bin/node-gyp.js" )

@@ -73,6 +73,26 @@ function installFiles(done) {
 
   ncp(source, target, options, done);
 
+  if (process.platform === 'darwin') {
+    // Adds a helper scripts to run "npm rebuild" and "node" with the current PATH.
+    // This workaround is needed for Android Studio on macOS when it is not started
+    // from the command line, as npm and node probably won't be in the PATH at build time.
+    var helperMacOSBuildScriptPath = path.join(target, 'build-native-modules-MacOS-helper-script-npm.sh');
+    fs.writeFileSync( helperMacOSBuildScriptPath,`#!/bin/bash
+      # Helper script for Gradle to call npm on macOS in case it is not found
+      export PATH=$PATH:${process.env.PATH}
+      npm $@
+    `, {"mode": 0o755}
+    );
+    helperMacOSBuildScriptPath = path.join(target, 'build-native-modules-MacOS-helper-script-node.sh');
+    fs.writeFileSync( helperMacOSBuildScriptPath,`#!/bin/bash
+      # Helper script for Gradle to call node on macOS in case it is not found
+      export PATH=$PATH:${process.env.PATH}
+      node $@
+    `, {"mode": 0o755}
+    );
+  }
+
 }
 
 installFiles( function(err) {
