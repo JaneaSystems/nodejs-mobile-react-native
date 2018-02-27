@@ -107,6 +107,14 @@ import org.gradle.internal.os.OperatingSystem;
 String shouldRebuildNativeModules = System.getenv('NODEJS_MOBILE_BUILD_NATIVE_MODULES');
 
 if (shouldRebuildNativeModules==null) {
+// If the environment variable is not set right now, check if it has been saved to a file.
+    def nativeModulesPreferenceFile = file("${rootProject.projectDir}/../nodejs-assets/BUILD_NATIVE_MODULES.txt");
+    if (nativeModulesPreferenceFile.exists()) {
+        shouldRebuildNativeModules=nativeModulesPreferenceFile.text.trim();
+    }
+}
+
+if (shouldRebuildNativeModules==null) {
 // If build native modules preference is not set, try to find .gyp files to turn it on.
     shouldRebuildNativeModules="0";
     def gyp_files_tree = fileTree(
