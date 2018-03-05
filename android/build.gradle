@@ -114,22 +114,6 @@ if (shouldRebuildNativeModules==null) {
     }
 }
 
-if (shouldRebuildNativeModules==null) {
-// If build native modules preference is not set, try to find .gyp files to turn it on.
-    shouldRebuildNativeModules="0";
-    def gyp_files_tree = fileTree(
-        dir: "${rootProject.projectDir}/../nodejs-assets/nodejs-project",
-        include: "**/*.gyp"
-    );
-    gyp_files_tree.visit { gypFile ->
-        if (!gypFile.isDirectory()) {
-            // It's a .gyp file.
-            shouldRebuildNativeModules="1";
-            gypFile.stopVisiting();
-        }
-    }
-}
-
 if ("1".equals(shouldRebuildNativeModules)) {
 
     String npmCommandName = 'npm';
