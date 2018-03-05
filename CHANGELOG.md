@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.1.4">0.1.4</a><br/>
 <a href="#0.1.3">0.1.3</a><br/>
 <a href="#0.1.2">0.1.2</a><br/>
 <a href="#0.1.1">0.1.1</a><br/>
@@ -13,8 +14,36 @@
 </tr>
 </table>
 
+<a id="0.1.4"></a>
+## 2018-03-05, Version 0.1.4 (Current)
+
+### Notable Changes
+
+* Include the nodejs-project in the runtime NODE_PATH.
+* Update `nodejs-mobile` binaries to `v0.1.4`.
+* Include experimental native modules build code.
+* Increase the iOS node thread stack size to 1MB.
+
+### Commits
+
+* [[`7780f20`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/7780f2017817723de53123a268578c89b96235e1)] - plugin: remove native modules detection (Jaime Bernardo)
+* [[`99f3400`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/99f3400895d0b8626dbea37f8382f13e6aeb7ebb)] - docs: rephrasing of some README.md sections (Jaime Bernardo)
+* [[`940fcfe`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/940fcfe5f14baf9976d8714b3aa321fc094821b7)] - ios: increase node's thread stack size to 1MB (Jaime Bernardo)
+* [[`409b5d4`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/409b5d4e35ae0ad8fe102c26b778e6aa77888f1c)] - docs: Add native modules instructions (Jaime Bernardo)
+* [[`62af6f1`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/62af6f1ed876756135ca24ec47075dee5665d7c6)] - ios: use file to override native modules build (Jaime Bernardo)
+* [[`fabbd6b`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/fabbd6b6a3757af1e624c52503c7f5e8e07a6e9e)] - android: use file to override native modules build (Jaime Bernardo)
+* [[`41f7dce`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/41f7dcedbf0ecaa25ea256cd069c1c6b6c94d626)] - android: use script to call npm and node on macOS (Jaime Bernardo)
+* [[`3cc78d6`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/3cc78d66a313fb8ec80ba568990f907f182c2d47)] - android: use gradle tasks inputs and outputs (Jaime Bernardo)
+* [[`8a7688f`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/8a7688f9b8942f0977483d7929ead7a19fbf473f)] - plugin: Build native modules automatically (Jaime Bernardo)
+* [[`7ae4dd5`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/7ae4dd569b5bcc9e560ba75bbff2bdf29904a8d8)] - plugin: use nodejs-mobile-gyp for native modules (Jaime Bernardo)
+* [[`d933954`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/d9339545465c67b846cbe5b9b09e5180e4846cb6)] - plugin: patch node-pre-gyp module path variables (Jaime Bernardo)
+* [[`62c2670`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/62c2670b743bc60da817e8a686622fad597f1737)] - ios: native modules support (Jaime Bernardo)
+* [[`af82e39`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/af82e3974d4b206b84ed20a24646a4901ae81f32)] - android: native modules support (Jaime Bernardo)
+* [[`448c9ae`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/448c9ae32e70e1d2ec5239fa9d95ce22179f6eca)] - core: update nodejs-mobile v0.1.4 (Jaime Bernardo)
+* [[`d478d02`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/d478d029d76e7d1de8b52d1cd5c51f7d61067b31)] - plugin: set NODE_PATH to include the project root (Enrico Giordani)
+
 <a id="0.1.3"></a>
-## 2018-01-16, Version 0.1.3 (Current)
+## 2018-01-16, Version 0.1.3
 
 ### Notable Changes
 
