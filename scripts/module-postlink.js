@@ -32,7 +32,7 @@ function getProjectConfig() {
   return returnObj;
 }
 
-  // Adds a custom function to remove script build phases, which is not supported in the xcode module yet.
+  // Adds a custom function to remove script build phases, which is not supported in the xcode module.
   xcode.project.prototype.myRemovePbxScriptBuildPhase = function (buildPhaseName, target) {
     var buildPhaseTargetUuid = target || this.getFirstTarget().uuid;
 
@@ -193,10 +193,21 @@ else
 fi
 fi
 if [ "1" != "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then exit 0; fi
+# Delete object files that may already come from within the npm package.
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.o" -type f -delete
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.a" -type f -delete
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.node" -type f -delete
+# Delete bundle contents that may be there from previous builds.
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -path "*/*.node/*" -delete
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.node" -type d -delete
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -path "*/*.framework/*" -delete
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.framework" -type d -delete
 # Apply patches to the modules package.json
-PATCH_SCRIPT_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-react-native/scripts/ && pwd )"
-NODEJS_PROJECT_MODULES_DIR="$( cd "$CODESIGNING_FOLDER_PATH" && cd nodejs-project/node_modules/ && pwd )"
-node "$PATCH_SCRIPT_DIR"/patch-package.js $NODEJS_PROJECT_MODULES_DIR
+if [ -d "$CODESIGNING_FOLDER_PATH"/nodejs-project/node_modules/ ]; then
+  PATCH_SCRIPT_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-react-native/scripts/ && pwd )"
+  NODEJS_PROJECT_MODULES_DIR="$( cd "$CODESIGNING_FOLDER_PATH" && cd nodejs-project/node_modules/ && pwd )"
+  node "$PATCH_SCRIPT_DIR"/patch-package.js $NODEJS_PROJECT_MODULES_DIR
+fi
 # Get the nodejs-mobile-gyp location
 NODEJS_MOBILE_GYP_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-gyp/ && pwd )"
 NODEJS_MOBILE_GYP_BIN_FILE="$NODEJS_MOBILE_GYP_DIR"/bin/node-gyp.js
@@ -205,9 +216,9 @@ NODEJS_HEADERS_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-rea
 pushd $CODESIGNING_FOLDER_PATH/nodejs-project/
 if [ "$PLATFORM_NAME" == "iphoneos" ]
 then
-  GYP_DEFINES="OS=ios" npm_config_nodedir="$NODEJS_HEADERS_DIR" npm_config_node_gyp="$NODEJS_MOBILE_GYP_BIN_FILE" npm_config_platform="ios" npm_config_node_engine="chakracore" npm_config_arch="arm64" npm --verbose rebuild --build-from-source
+  GYP_DEFINES="OS=ios" npm_config_nodedir="$NODEJS_HEADERS_DIR" npm_config_node_gyp="$NODEJS_MOBILE_GYP_BIN_FILE" npm_config_platform="ios" npm_config_format="make-ios" npm_config_node_engine="chakracore" npm_config_arch="arm64" npm --verbose rebuild --build-from-source
 else
-  GYP_DEFINES="OS=ios" npm_config_nodedir="$NODEJS_HEADERS_DIR" npm_config_node_gyp="$NODEJS_MOBILE_GYP_BIN_FILE" npm_config_platform="ios" npm_config_node_engine="chakracore" npm_config_arch="x64" npm --verbose rebuild --build-from-source
+  GYP_DEFINES="OS=ios" npm_config_nodedir="$NODEJS_HEADERS_DIR" npm_config_node_gyp="$NODEJS_MOBILE_GYP_BIN_FILE" npm_config_platform="ios" npm_config_format="make-ios" npm_config_node_engine="chakracore" npm_config_arch="x64" npm --verbose rebuild --build-from-source
 fi
 popd
 `
@@ -239,7 +250,26 @@ else
 fi
 fi
 if [ "1" != "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then exit 0; fi
-/usr/bin/codesign --force --sign $EXPANDED_CODE_SIGN_IDENTITY --preserve-metadata=identifier,entitlements,flags --timestamp=none $(find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -type f -name "*.node")
+# Delete object files
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.o" -type f -delete
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.a" -type f -delete
+# Create Info.plist for each framework built and loader override.
+PATCH_SCRIPT_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-react-native/scripts/ && pwd )"
+NODEJS_PROJECT_DIR="$( cd "$CODESIGNING_FOLDER_PATH" && cd nodejs-project/ && pwd )"
+node "$PATCH_SCRIPT_DIR"/ios-create-plists-and-dlopen-override.js $NODEJS_PROJECT_DIR
+# Embed every resulting .framework in the application and delete them afterwards.
+embed_framework()
+{
+    FRAMEWORK_NAME="$(basename "$1")"
+    cp -r "$1" "$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/"
+    
+    /usr/bin/codesign --force --sign $EXPANDED_CODE_SIGN_IDENTITY --preserve-metadata=identifier,entitlements,flags --timestamp=none "$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/$FRAMEWORK_NAME"
+}
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.framework" -type d | while read frmwrk_path; do embed_framework "$frmwrk_path"; done
+
+#Delete frameworks from their build paths
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -path "*/*.framework/*" -delete
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.framework" -type d -delete
 `
     var signNativeModulesBuildPhase = xcodeProject.buildPhaseObject('PBXShellScriptBuildPhase', signNativeModulesBuildPhaseName, firstTargetUUID);
     if (signNativeModulesBuildPhase) {
