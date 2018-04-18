@@ -32,6 +32,40 @@ function getProjectConfig() {
   return returnObj;
 }
 
+  // Adds a custom function to remove script build phases, which is not supported in the xcode module yet.
+  xcode.project.prototype.myRemovePbxScriptBuildPhase = function (buildPhaseName, target) {
+    var buildPhaseTargetUuid = target || this.getFirstTarget().uuid;
+
+    var buildPhaseUuid_comment = this.buildPhase(buildPhaseName, buildPhaseTargetUuid);
+    if (!buildPhaseUuid_comment)
+    {
+      throw new Error("Couldn't find the build script phase to remove: " + buildPhaseName );
+    }
+
+    // Remove the '_comment' suffix to get the actual uuid.
+    var buildPhaseUuid=buildPhaseUuid_comment.split('_')[0];
+
+    // Remove from the pbxBuildPhaseObjects
+    var pbxBuildPhaseObjects = this.getPBXObject('PBXShellScriptBuildPhase');
+    if (pbxBuildPhaseObjects) {
+      delete pbxBuildPhaseObjects[buildPhaseUuid];
+      delete pbxBuildPhaseObjects[buildPhaseUuid_comment];
+    }
+
+    // Remove from the target's buildPhases
+    var nativeTargets = this.pbxNativeTargetSection();
+    var nativeTarget = nativeTargets[buildPhaseTargetUuid];
+    var buildPhases = nativeTarget.buildPhases;
+    for(var i in buildPhases)
+    {
+      var buildPhase = buildPhases[i];
+      if (buildPhase.value == buildPhaseUuid) {
+        buildPhases.splice(i, 1);
+        break;
+      }
+    }
+  };
+
 var detectedConfigs=getProjectConfig();
 if ( detectedConfigs && detectedConfigs.ios && detectedConfigs.ios.pbxprojPath)
 {
@@ -178,15 +212,16 @@ fi
 popd
 `
     var rebuildNativeModulesBuildPhase = xcodeProject.buildPhaseObject('PBXShellScriptBuildPhase', rebuildNativeModulesBuildPhaseName, firstTargetUUID);
-    if (!(rebuildNativeModulesBuildPhase)) {
-      xcodeProject.addBuildPhase(
-        [],
-        'PBXShellScriptBuildPhase',
-        rebuildNativeModulesBuildPhaseName,
-        firstTargetUUID,
-        { shellPath: '/bin/sh', shellScript: rebuildNativeModulesBuildPhaseScript }
-      );
+    if (rebuildNativeModulesBuildPhase) {
+      xcodeProject.myRemovePbxScriptBuildPhase(rebuildNativeModulesBuildPhaseName, firstTargetUUID);
     }
+    xcodeProject.addBuildPhase(
+      [],
+      'PBXShellScriptBuildPhase',
+      rebuildNativeModulesBuildPhaseName,
+      firstTargetUUID,
+      { shellPath: '/bin/sh', shellScript: rebuildNativeModulesBuildPhaseScript }
+    );
 
     //Adds a build phase to sign native modules
     var signNativeModulesBuildPhaseName = 'Sign NodeJS Mobile Native Modules';
@@ -207,15 +242,16 @@ if [ "1" != "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then exit 0; fi
 /usr/bin/codesign --force --sign $EXPANDED_CODE_SIGN_IDENTITY --preserve-metadata=identifier,entitlements,flags --timestamp=none $(find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -type f -name "*.node")
 `
     var signNativeModulesBuildPhase = xcodeProject.buildPhaseObject('PBXShellScriptBuildPhase', signNativeModulesBuildPhaseName, firstTargetUUID);
-    if (!(signNativeModulesBuildPhase)) {
-      xcodeProject.addBuildPhase(
-        [],
-        'PBXShellScriptBuildPhase',
-        signNativeModulesBuildPhaseName,
-        firstTargetUUID,
-        { shellPath: '/bin/sh', shellScript: signNativeModulesBuildPhaseScript }
-      );
+    if (signNativeModulesBuildPhase) {
+      xcodeProject.myRemovePbxScriptBuildPhase(signNativeModulesBuildPhaseName, firstTargetUUID);
     }
+    xcodeProject.addBuildPhase(
+      [],
+      'PBXShellScriptBuildPhase',
+      signNativeModulesBuildPhaseName,
+      firstTargetUUID,
+      { shellPath: '/bin/sh', shellScript: signNativeModulesBuildPhaseScript }
+    );
 
     //Writes the updated .pbx file
     fs.writeFileSync(pbxProjectPath,xcodeProject.writeSync(),'utf-8');
