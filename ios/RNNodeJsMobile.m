@@ -49,23 +49,54 @@ RCT_EXPORT_METHOD(sendMessage:(NSString *)script)
 
 -(void)callStartNodeWithScript:(NSString *)script
 {
-  NSArray* nodeArguments = [NSArray arrayWithObjects:
-                            @"node",
-                            @"-e",
-                            script,
-                            nil
-                            ];
+  NSArray* nodeArguments = nil;
+
+  NSString* dlopenoverridePath = [[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"%@/override-dlopen-paths-preload.js", NODEJS_PROJECT_RESOURCE_PATH] ofType:@""];
+  // Check if the file to override dlopen lookup exists, for loading native modules from the Frameworks.
+  if(!dlopenoverridePath)
+  {
+    nodeArguments = [NSArray arrayWithObjects:
+                              @"node",
+                              @"-e",
+                              script,
+                              nil
+                              ];
+  } else {
+    nodeArguments = [NSArray arrayWithObjects:
+                              @"node",
+                              @"-r",
+                              dlopenoverridePath,
+                              @"-e",
+                              script,
+                              nil
+                              ];
+  }
   [[NodeRunner sharedInstance] startEngineWithArguments:nodeArguments:nodePath];
 }
 
 -(void)callStartNodeProject:(NSString *)mainFileName
 {
   NSString* srcPath = [[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"%@/%@", NODEJS_PROJECT_RESOURCE_PATH, mainFileName] ofType:@""];
-  NSArray* nodeArguments = [NSArray arrayWithObjects:
-                            @"node",
-                            srcPath,
-                            nil
-                            ];
+  NSArray* nodeArguments = nil;
+
+  NSString* dlopenoverridePath = [[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"%@/override-dlopen-paths-preload.js", NODEJS_PROJECT_RESOURCE_PATH] ofType:@""];
+  // Check if the file to override dlopen lookup exists, for loading native modules from the Frameworks.
+  if(!dlopenoverridePath)
+  {
+    nodeArguments = [NSArray arrayWithObjects:
+                              @"node",
+                              srcPath,
+                              nil
+                              ];
+  } else {
+    nodeArguments = [NSArray arrayWithObjects:
+                              @"node",
+                              @"-r",
+                              dlopenoverridePath,
+                              srcPath,
+                              nil
+                              ];
+  }
   [[NodeRunner sharedInstance] startEngineWithArguments:nodeArguments:nodePath];
 }
 
