@@ -267,6 +267,10 @@ embed_framework()
 }
 find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.framework" -type d | while read frmwrk_path; do embed_framework "$frmwrk_path"; done
 
+#Delete gyp temporary .deps dependency folders from the project structure.
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -path "*/.deps/*" -delete
+find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name ".deps" -type d -delete
+
 #Delete frameworks from their build paths
 find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -path "*/*.framework/*" -delete
 find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.framework" -type d -delete
