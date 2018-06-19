@@ -325,6 +325,10 @@ if ("1".equals(shouldRebuildNativeModules)) {
             outputs.file "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/file.list"
             outputs.file "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/dir.list"
             doLast{
+                if(!(new File("${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/")).exists()) {
+                    // If the native assets folder doesn't exist from the copy task, skip the creation of the file.list
+                    return;
+                }
                 delete "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/file.list"
                 delete "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/dir.list"
                 String file_list = "";
