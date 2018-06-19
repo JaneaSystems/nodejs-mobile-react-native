@@ -291,6 +291,33 @@ find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -name "*.framework" -type d -del
       { shellPath: '/bin/sh', shellScript: signNativeModulesBuildPhaseScript }
     );
 
+    //Adds a build phase to remove the x64 strips from the NodeMobile framework. Needed for correct App Store submission.
+    var removeSimulatorArchsBuildPhaseName = 'Remove NodeJS Mobile Framework Simulator Strips';
+    var removeSimulatorArchsBuildPhaseScript = `
+set -e
+FRAMEWORK_BINARY_PATH="$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/NodeMobile.framework/NodeMobile"
+FRAMEWORK_STRIPPED_PATH="$FRAMEWORK_BINARY_PATH-strip"
+if [ "$PLATFORM_NAME" != "iphonesimulator" ]; then
+  if $(lipo "$FRAMEWORK_BINARY_PATH" -verify_arch "x86_64") ; then
+    lipo -output "$FRAMEWORK_STRIPPED_PATH" -remove "x86_64" "$FRAMEWORK_BINARY_PATH"
+    rm "$FRAMEWORK_BINARY_PATH"
+    mv "$FRAMEWORK_STRIPPED_PATH" "$FRAMEWORK_BINARY_PATH"
+    echo "Removed simulator strip from NodeMobile.framework"
+  fi
+fi
+`
+    var removeSimulatorArchsBuildPhase = xcodeProject.buildPhaseObject('PBXShellScriptBuildPhase', removeSimulatorArchsBuildPhaseName, firstTargetUUID);
+    if (removeSimulatorArchsBuildPhase) {
+      xcodeProject.myRemovePbxScriptBuildPhase(removeSimulatorArchsBuildPhaseName, firstTargetUUID);
+    }
+    xcodeProject.addBuildPhase(
+      [],
+      'PBXShellScriptBuildPhase',
+      removeSimulatorArchsBuildPhaseName,
+      firstTargetUUID,
+      { shellPath: '/bin/sh', shellScript: removeSimulatorArchsBuildPhaseScript }
+    );
+
     //Writes the updated .pbx file
     fs.writeFileSync(pbxProjectPath,xcodeProject.writeSync(),'utf-8');
   });
