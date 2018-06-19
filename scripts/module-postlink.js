@@ -209,7 +209,11 @@ if [ -d "$CODESIGNING_FOLDER_PATH"/nodejs-project/node_modules/ ]; then
   node "$PATCH_SCRIPT_DIR"/patch-package.js $NODEJS_PROJECT_MODULES_DIR
 fi
 # Get the nodejs-mobile-gyp location
-NODEJS_MOBILE_GYP_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-gyp/ && pwd )"
+if [ -d "$PROJECT_DIR/../node_modules/nodejs-mobile-gyp/" ]; then
+  NODEJS_MOBILE_GYP_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-gyp/ && pwd )"
+else
+  NODEJS_MOBILE_GYP_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-react-native/node_modules/nodejs-mobile-gyp/ && pwd )"
+fi
 NODEJS_MOBILE_GYP_BIN_FILE="$NODEJS_MOBILE_GYP_DIR"/bin/node-gyp.js
 # Rebuild modules with right environment
 NODEJS_HEADERS_DIR="$( cd "$PROJECT_DIR" && cd ../node_modules/nodejs-mobile-react-native/ios/libnode/ && pwd )"

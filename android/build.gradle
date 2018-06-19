@@ -292,7 +292,13 @@ if ("1".equals(shouldRebuildNativeModules)) {
             commandLine npmCommandName, '--verbose', 'rebuild', '--build-from-source'
             environment ('npm_config_node_engine', 'v8' )
             environment ('npm_config_nodedir', "${project.projectDir}/libnode/" )
-            environment ('npm_config_node_gyp', "${project.projectDir}/../../nodejs-mobile-gyp/bin/node-gyp.js" )
+            String npm_gyp_path_to_use; // Check common paths for nodejs-mobile-gyp
+            if ( file("${project.projectDir}/../../nodejs-mobile-gyp/bin/node-gyp.js").exists() ) {
+                npm_gyp_path_to_use = "${project.projectDir}/../../nodejs-mobile-gyp/bin/node-gyp.js";
+            } else {
+                npm_gyp_path_to_use = "${project.projectDir}/../node_modules/nodejs-mobile-gyp/bin/node-gyp.js";
+            }
+            environment ('npm_config_node_gyp', npm_gyp_path_to_use )
             environment ('npm_config_arch', temp_arch)
             environment ('npm_config_platform', 'android')
             environment ('npm_config_format', 'make-android')
