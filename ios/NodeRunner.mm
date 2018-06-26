@@ -9,8 +9,10 @@ void notifyNode(const char* msg)
 }
 
 void rcv_message(char* msg) {
-  NSString* objectiveCMessage=[NSString stringWithUTF8String:msg];
-  [[NodeRunner sharedInstance] sendMessageBackToReact:objectiveCMessage];
+  @autoreleasepool {
+    NSString* objectiveCMessage=[NSString stringWithUTF8String:msg];
+    [[NodeRunner sharedInstance] sendMessageBackToReact:objectiveCMessage];
+  }
 }
 
 @implementation NodeRunner
