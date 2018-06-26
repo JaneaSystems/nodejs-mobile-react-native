@@ -59,8 +59,10 @@ void rcv_message(char* msg) {
     if(m_sendMessage != nullptr) {
         jstring java_msg=env->NewStringUTF(msg);
         env->CallStaticVoidMethod(cls2, m_sendMessage,java_msg);                      // call method
+        env->DeleteLocalRef(java_msg);
     }
   }
+  env->DeleteLocalRef(cls2);
 }
 
 // Start threads to redirect stdout and stderr to logcat.
