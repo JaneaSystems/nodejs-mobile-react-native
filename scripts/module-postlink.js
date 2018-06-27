@@ -186,11 +186,19 @@ if [ -z "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then
 #nodejs-assets/BUILD_NATIVE_MODULES.txt file.
 NODEJS_ASSETS_DIR="$( cd "$PROJECT_DIR" && cd ../nodejs-assets/ && pwd )"
 PREFERENCE_FILE_PATH="$NODEJS_ASSETS_DIR/BUILD_NATIVE_MODULES.txt"
-if [ -f "$PREFERENCE_FILE_PATH" ]; then
-  NODEJS_MOBILE_BUILD_NATIVE_MODULES="$(cat $PREFERENCE_FILE_PATH | xargs)"
-else
-  NODEJS_MOBILE_BUILD_NATIVE_MODULES=0
+  if [ -f "$PREFERENCE_FILE_PATH" ]; then
+    NODEJS_MOBILE_BUILD_NATIVE_MODULES="$(cat $PREFERENCE_FILE_PATH | xargs)"
+  fi
 fi
+if [ -z "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then
+# If build native modules preference is not set, try to find .gyp files
+#to turn it on.
+  gypfiles=($(find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -type f -name "*.gyp"))
+  if [ \${#gypfiles[@]} -gt 0 ]; then
+    NODEJS_MOBILE_BUILD_NATIVE_MODULES=1
+  else
+    NODEJS_MOBILE_BUILD_NATIVE_MODULES=0
+  fi
 fi
 if [ "1" != "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then exit 0; fi
 # Delete object files that may already come from within the npm package.
@@ -247,11 +255,19 @@ if [ -z "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then
 #nodejs-assets/BUILD_NATIVE_MODULES.txt file.
 NODEJS_ASSETS_DIR="$( cd "$PROJECT_DIR" && cd ../nodejs-assets/ && pwd )"
 PREFERENCE_FILE_PATH="$NODEJS_ASSETS_DIR/BUILD_NATIVE_MODULES.txt"
-if [ -f "$PREFERENCE_FILE_PATH" ]; then
-  NODEJS_MOBILE_BUILD_NATIVE_MODULES="$(cat $PREFERENCE_FILE_PATH | xargs)"
-else
-  NODEJS_MOBILE_BUILD_NATIVE_MODULES=0
+  if [ -f "$PREFERENCE_FILE_PATH" ]; then
+    NODEJS_MOBILE_BUILD_NATIVE_MODULES="$(cat $PREFERENCE_FILE_PATH | xargs)"
+  fi
 fi
+if [ -z "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then
+# If build native modules preference is not set, try to find .gyp files
+#to turn it on.
+  gypfiles=($(find "$CODESIGNING_FOLDER_PATH/nodejs-project/" -type f -name "*.gyp"))
+  if [ \${#gypfiles[@]} -gt 0 ]; then
+    NODEJS_MOBILE_BUILD_NATIVE_MODULES=1
+  else
+    NODEJS_MOBILE_BUILD_NATIVE_MODULES=0
+  fi
 fi
 if [ "1" != "$NODEJS_MOBILE_BUILD_NATIVE_MODULES" ]; then exit 0; fi
 # Delete object files
