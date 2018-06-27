@@ -255,6 +255,9 @@ if ("1".equals(shouldRebuildNativeModules)) {
                 copy {
                     from "${rootProject.projectDir}/../nodejs-assets/nodejs-project/"
                     into "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
+                    // Symlinks to binaries will be resolved by Gradle during the copy, causing build time errors.
+                    // The original project's .bin folder will be added to the path while building in the BuildNpmModules tasks.
+                    exclude "**/.bin"
                 }
                 if (OperatingSystem.current().isMacOsX()) {
                     // Copy the helper scripts for calling npm and node when building in Android Studio on macOS.
@@ -302,6 +305,15 @@ if ("1".equals(shouldRebuildNativeModules)) {
             environment ('npm_config_arch', temp_arch)
             environment ('npm_config_platform', 'android')
             environment ('npm_config_format', 'make-android')
+
+            // Adds the original project .bin to the path. It's a workaround
+            // to correctly build some modules that depend on symlinked modules,
+            // like node-pre-gyp.
+            String original_project_bin = "${rootProject.projectDir}/../nodejs-assets/nodejs-project/node_modules/.bin";
+            if(file(original_project_bin).exists()) {
+                environment ('PATH', "${original_project_bin}" + System.getProperty("path.separator") + "${System.env.PATH}")
+            }
+
             environment ('TOOLCHAIN',"${standalone_toolchain}")
             environment ('AR',"${npm_toolchain_ar}")
             environment ('CC',"${npm_toolchain_cc}")
