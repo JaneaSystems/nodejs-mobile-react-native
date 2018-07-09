@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.2.0">0.2.0</a><br/>
 <a href="#0.1.4">0.1.4</a><br/>
 <a href="#0.1.3">0.1.3</a><br/>
 <a href="#0.1.2">0.1.2</a><br/>
@@ -14,8 +15,35 @@
 </tr>
 </table>
 
+<a id="0.2.0"></a>
+## 2018-07-09, Version 0.2.0 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile` binaries to `v0.1.6`, with concurrent GC for iOS.
+* Improve native modules support.
+* Automatically detect native modules.
+* Remove simulator strip when building for iOS devices.
+* Include memory optimizations.
+
+### Commits
+
+* [[`b0a55d6`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/b0a55d6cc9244d519c53e026b1f3a5ca9ada288b)] - core: update nodejs-mobile v0.1.6 (Jaime Bernardo)
+* [[`dc6e1ed`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/dc6e1ed4a0de202567d08beae1b58b81067e64c8)] - docs: add native modules instructions to README (Jaime Bernardo)
+* [[`eb960e0`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/eb960e02cd64d0a1d4229e249d472c6500eaf67e)] - plugin: add automatic native modules detection (Jaime Bernardo)
+* [[`ded08e5`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/ded08e5ddf0de5402ddd74e27205561fa8474e55)] - android: use original .bin for native modules (Jaime Bernardo)
+* [[`209f541`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/209f5410b6e35c8b3f5fc94049f09c0fa92ca975)] - android: release node-rn JNI local references (Jaime Bernardo)
+* [[`fd958ed`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/fd958edc6079061f5ccc6ee637be30d7d910c945)] - ios: release memory from node-react messages (Jaime Bernardo)
+* [[`d356d70`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/d356d70ac15ce1e59d6916ef143aca4cc6e5a6e5)] - core: update nodejs-mobile v0.1.5 (Jaime Bernardo)
+* [[`cba49e1`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/cba49e1baa457a7be7b094ec06d5fdf2cc396498)] - ios: building for device removes the x86_64 arch (Jaime Bernardo)
+* [[`22e6286`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/22e62863c30a215fc9227672da867fa88e8e7d0e)] - android: check if native modules assets exist (Jaime Bernardo)
+* [[`222f953`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/222f9539b62e18c0fb090f7972e3ea3f599bd83f)] - plugin: use alternative nodejs-mobile-gyp path (Jaime Bernardo)
+* [[`757294e`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/757294e9567cdd0fd1723f25c4a37b8918a8f193)] - ios: delete .deps gyp paths from app build (Jaime Bernardo)
+* [[`5f5447d`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/5f5447db4ab0ebc0e610cbfff598774bb83c2eb1)] - ios: build native modules as frameworks (Jaime Bernardo)
+* [[`89ce6b3`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/89ce6b335ab71943b856215e3be973d71b9b8b87)] - ios: rewrite build phases when linking (Jaime Bernardo)
+
 <a id="0.1.4"></a>
-## 2018-03-05, Version 0.1.4 (Current)
+## 2018-03-05, Version 0.1.4
 
 ### Notable Changes
 
