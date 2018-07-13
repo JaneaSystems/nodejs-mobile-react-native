@@ -170,8 +170,8 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void sendMessage(String msg) {
-    notifyNode(msg);
+  public void sendMessage(String channel, String msg) {
+    sendMessageToNodeChannel(channel, msg);
   }
 
   // Sends an event through the App Event Emitter.
@@ -183,14 +183,16 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
   }
 
   // Called from JNI when node sends a message through the bridge.
-  public static void sendMessageBackToReact(String msg) {
+  public static void sendMessageBackToReact(String channelName, String msg) {
     if (_instance != null) {
       final RNNodeJsMobileModule _moduleInstance = _instance;
+      final String _channelNameToPass = new String(channelName);
       final String _msgToPass = new String(msg);
       new Thread(new Runnable() {
         @Override
         public void run() {
           WritableMap params = Arguments.createMap();
+          params.putString("channelName", _channelNameToPass);
           params.putString("message", _msgToPass);
           _moduleInstance.sendEvent("nodejs-mobile-react-native-message", params);
         }
@@ -202,7 +204,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
 
   public native Integer startNodeWithArguments(String[] arguments, String modulesPath, boolean option_redirectOutputToLogcat);
 
-  public native void notifyNode(String msg);
+  public native void sendMessageToNodeChannel(String channelName, String msg);
 
   private void waitForInit() {
     if (!initCompleted) {

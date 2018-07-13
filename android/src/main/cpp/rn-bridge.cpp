@@ -10,7 +10,9 @@
 #include <cstdlib>
 
 
-//Some helper macros from node/test/addons-napi/common.h
+/**
+ * Some helper macros from node/test/addons-napi/common.h
+ */
 
 // Empty value so that macros here are able to return NULL or void
 #define NAPI_RETVAL_NOTHING  // Intentionally blank #define
@@ -67,165 +69,238 @@
 #define NAPI_CALL_RETURN_VOID(env, the_call)                             \
   NAPI_CALL_BASE(env, the_call, NAPI_RETVAL_NOTHING)
 
+/**
+ * Forward declarations
+ */
+void FlushMessageQueue(uv_async_t* handle);
+class Channel;
 
-class QueuedFunc {
+/**
+ * Global variables
+ */
+std::mutex channelsMutex;
+std::map<std::string, Channel*> channels;
+
+/**
+ * Channel class
+ */
+class Channel {
+private:
+    napi_env env = NULL;
+    napi_ref function_ref = NULL;
+    uv_async_t* queue_uv_handle = NULL;
+    std::mutex uvhandleMutex;
+    std::mutex queueMutex;
+    std::queue<char*> messageQueue;
+    std::string name;
+    bool initialized = false;
+
 public:
-    QueuedFunc(napi_env& env, napi_ref& function) : env(env), function(function) {
+    Channel(std::string name) : name(name) {};
+
+    // Set up the channel's NAPI data. This method can be called
+    // only once per channel.
+    void setNapiRefs(napi_env& env, napi_ref& function_ref) {
+        this->uvhandleMutex.lock();
+        if (this->queue_uv_handle == NULL) {
+            this->env = env;
+            this->function_ref = function_ref;
+
+            this->queue_uv_handle = (uv_async_t*)malloc(sizeof(uv_async_t));
+            uv_async_init(uv_default_loop(), this->queue_uv_handle, FlushMessageQueue);
+            this->queue_uv_handle->data = (void*)this;
+            initialized = true;
+            uv_async_send(this->queue_uv_handle);
+        } else {
+            napi_throw_error(env, NULL, "Channel already exists.");
+        }
+        this->uvhandleMutex.unlock();
     };
 
-    void notify_message(char *s){
-        napi_env original_env = env;
+    // Add a new message to the channel's queue and notify libuv to
+    // call us back to do the actual message delivery.
+    void queueMessage(char* msg) {
+        this->queueMutex.lock();
+        this->messageQueue.push(msg);
+        this->queueMutex.unlock();
 
+        if (initialized) {
+            uv_async_send(this->queue_uv_handle);
+        }
+    };
+
+    // Process one message at the time, to simplify synchronization between
+    // threads and minimize lock retention.
+    void flushQueue() {
+        char* message = NULL;
+        bool empty = true;
+
+        this->queueMutex.lock();
+        if (!(this->messageQueue.empty())) {
+            message = this->messageQueue.front();
+            this->messageQueue.pop();
+            empty = this->messageQueue.empty();
+        }
+        this->queueMutex.unlock();
+
+        if (message != NULL) {
+            this->invokeNodeListener(message);
+            free(message);
+        }
+
+        if (!empty) {
+            uv_async_send(this->queue_uv_handle);
+        }
+    };
+
+    // Calls into Node to execute the registered Node listener.
+    // This method is always executed on the main libuv loop thread.
+    void invokeNodeListener(char* msg) {
         napi_handle_scope scope;
-        napi_open_handle_scope(original_env, &scope);
+        napi_open_handle_scope(this->env, &scope);
 
-        napi_ref original_function_ref = function;
-
-        napi_value callback;
-        napi_get_reference_value(original_env, original_function_ref, &callback);
+        napi_value node_function;
+        napi_get_reference_value(this->env, this->function_ref, &node_function);
         napi_value global;
-        napi_get_global(original_env, &global);
+        napi_get_global(this->env, &global);
+
+        napi_value channel_name;
+        napi_create_string_utf8(this->env, this->name.c_str(), this->name.size(), &channel_name);
 
         napi_value message;
-        napi_create_string_utf8(original_env, s, strlen(s), &message);
+        napi_create_string_utf8(this->env, msg, strlen(msg), &message);
 
-        napi_value* argv = &message;
-        size_t argc = 1;
+        size_t argc = 2;
+        napi_value argv[argc];
+        argv[0] = channel_name;
+        argv[1] = message;
 
         napi_value result;
-        napi_call_function(original_env, global, callback, argc, argv, &result);
-
-        napi_close_handle_scope(original_env, scope);
-    }
-
-private:
-    napi_ref                    function;
-    napi_env                    env;
+        napi_call_function(this->env, global, node_function, argc, argv, &result);
+        napi_close_handle_scope(this->env, scope);
+    };
 };
-
-std::map<int32_t, QueuedFunc*> pool;
-int32_t my_little_pool_incrementer=1;
 
 rn_bridge_cb embedder_callback=NULL;
 
-std::mutex queueLock;
-std::queue<char*> messageQueue;
-uv_async_t* queue_uv_handle=NULL;
-
+/**
+ * Called by the React Native plug-in to register the callback
+ * that receives the messages sent from Node.
+ */
 void rn_register_bridge_cb(rn_bridge_cb _cb) {
     embedder_callback=_cb;
 }
 
-void close_cb (uv_handle_t* handle) {
-    free(((uv_async_t*)handle)->data);
-    free(handle);
+/**
+ * Return an existing channel or create a new one if it doesn't exist already.
+ */
+Channel* GetOrCreateChannel(std::string channelName) {
+    channelsMutex.lock();
+    Channel* channel = NULL;
+    auto it = channels.find(channelName);
+    if (it != channels.end()) {
+        channel = it->second;
+    } else {
+        channel = new Channel(channelName);
+        channels[channelName] = channel;
+    }
+    channelsMutex.unlock();
+    return channel;
 };
 
-void doRegisteredCallbacks(uv_async_t* handle) {
-    std::map<int32_t, QueuedFunc*> copiedPool;
-    copiedPool=pool;
-    char* message =(char*)(handle->data);
-    std::map<int32_t, QueuedFunc*>::iterator it;
-    for(it = copiedPool.begin(); it != copiedPool.end(); it++) {
-        it->second->notify_message(message);
-    }
-    uv_close((uv_handle_t*)handle, close_cb);
+/**
+ * Flush the specific channel queue
+ */
+void FlushMessageQueue(uv_async_t* handle) {
+    Channel* channel = (Channel*)handle->data;
+    channel->flushQueue();
 }
 
-void flushMessageQueue(uv_async_t* handle) {
-    char* message;
-    queueLock.lock();
-    bool has_elements=!messageQueue.empty();
-    queueLock.unlock();
-    while(has_elements)
-    {
-        queueLock.lock();
-        message=messageQueue.front();
-        messageQueue.pop();
-        has_elements=!messageQueue.empty();
-        queueLock.unlock();
+/**
+ * Register a channel and its listener
+ */
+napi_value Method_RegisterChannel(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[argc];
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, args, NULL, NULL));
+    NAPI_ASSERT(env, argc == 2, "Wrong number of arguments.");
 
-        uv_async_t* handle = (uv_async_t*)malloc(sizeof(uv_async_t));
-        uv_async_init(uv_default_loop(), handle, doRegisteredCallbacks);
-        handle->data=(void*)message;
-        uv_async_send(handle);
-    }
-}
-
-void init_queue_uv_handle()
-{
-    queue_uv_handle = (uv_async_t*)malloc(sizeof(uv_async_t));
-    uv_async_init(uv_default_loop(), queue_uv_handle, flushMessageQueue);
-    uv_async_send(queue_uv_handle);
-}
-
-napi_value Method_RegisterListener(napi_env env, napi_callback_info info) {
-    if(queue_uv_handle==NULL)
-    {
-        init_queue_uv_handle();
-    }
-    size_t argc = 1;
-    napi_value args[1];
-    NAPI_CALL(env, napi_get_cb_info(env,info,&argc,args,NULL,NULL));
-
-    NAPI_ASSERT(env, argc == 1, "Wrong number of arguments");
-
-    napi_value listener_function=args[0];
-
+    // args[0] is the channel name
+    napi_value channel_name = args[0];
     napi_valuetype valuetype0;
-    NAPI_CALL(env, napi_typeof(env, listener_function, &valuetype0));
+    NAPI_CALL(env, napi_typeof(env, channel_name, &valuetype0));
+    NAPI_ASSERT(env, valuetype0 == napi_string, "Expected a string.");
 
-    NAPI_ASSERT(env, valuetype0==napi_function, "Expected a function");
+    size_t length;
+    size_t length_copied;
+    NAPI_CALL(env, napi_get_value_string_utf8(env, channel_name, NULL, 0, &length));
+
+    std::unique_ptr<char[]> unique_channelname_buf(new char[length + 1]());
+    char* channel_name_utf8 = unique_channelname_buf.get();
+    NAPI_CALL(env, napi_get_value_string_utf8(env, channel_name, channel_name_utf8, length + 1, &length_copied));
+    NAPI_ASSERT(env, length_copied == length, "Couldn't fully copy the channel name.");
+
+    // args[1] is the channel listener
+    napi_value listener_function = args[1];
+    napi_valuetype valuetype1;
+    NAPI_CALL(env, napi_typeof(env, listener_function, &valuetype1));
+    NAPI_ASSERT(env, valuetype1 == napi_function, "Expected a function.");
 
     napi_ref ref_to_function;
     NAPI_CALL(env, napi_create_reference(env, listener_function, 1, &ref_to_function));
 
-    napi_value result;
-    NAPI_CALL(env, napi_create_int32(env, my_little_pool_incrementer, &result));
-
-    QueuedFunc *af = new QueuedFunc(env, ref_to_function);
-    pool[my_little_pool_incrementer++]=af;
-
-    return result;
+    Channel* channel = GetOrCreateChannel(channel_name_utf8);
+    channel->setNapiRefs(env, ref_to_function);
+    return nullptr;
 }
 
-// Let's make something appear on native code.
+/**
+ * Send a message to React Native
+ */
 napi_value Method_SendMessage(napi_env env, napi_callback_info info) {
-    size_t argc = 1;
-    napi_value args[1];
+    size_t argc = 2;
+    napi_value args[argc];
 
-    NAPI_CALL(env, napi_get_cb_info(env,info,&argc,args,NULL,NULL));
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, args, NULL, NULL));
+    NAPI_ASSERT(env, argc == 2, "Wrong number of arguments.");
 
-    NAPI_ASSERT(env, argc == 1, "Wrong number of arguments");
+    // TODO: arguments parsing and string conversion is done several times,
+    //       replace the duplicated code with a function or a macro.
 
-    napi_value value_to_log=args[0];
-
+    // args[0] is the channel name
+    napi_value channel_name = args[0];
     napi_valuetype valuetype0;
-    NAPI_CALL(env, napi_typeof(env, value_to_log, &valuetype0));
-
-    if (valuetype0 != napi_string) {
-        NAPI_CALL(env, napi_coerce_to_string(env, value_to_log, &value_to_log));
-    }
+    NAPI_CALL(env, napi_typeof(env, channel_name, &valuetype0));
+    NAPI_ASSERT(env, valuetype0 == napi_string, "Expected a string.");
 
     size_t length;
-    size_t copied;
-    NAPI_CALL(env, napi_get_value_string_utf8(env, value_to_log, NULL, 0, &length));
+    size_t length_copied;
+    NAPI_CALL(env, napi_get_value_string_utf8(env, channel_name, NULL, 0, &length));
+    std::unique_ptr<char[]> unique_channelname_buf(new char[length + 1]());
+    char* channel_name_utf8 = unique_channelname_buf.get();
+    NAPI_CALL(env, napi_get_value_string_utf8(env, channel_name, channel_name_utf8, length + 1, &length_copied));
+    NAPI_ASSERT(env, length_copied == length, "Couldn't fully copy the channel name.");
 
-    //C++ cleans it automatically.
-    std::unique_ptr<char[]> unique_buffer(new char[length+1]());
-    char *buff=unique_buffer.get();
+    // args[1] is the message string
+    napi_value message = args[1];
 
-    NAPI_CALL(env, napi_get_value_string_utf8(env, value_to_log, buff, length+1, &copied));
-
-    NAPI_ASSERT(env, copied==length, "Couldn't fully copy the message");
-
-    NAPI_ASSERT(env, embedder_callback,"No callback is set in native code to receive the message");
-
-    if(embedder_callback)
-    {
-        embedder_callback(buff);
+    napi_valuetype valuetype1;
+    NAPI_CALL(env, napi_typeof(env, message, &valuetype1));
+    if (valuetype1 != napi_string) {
+        NAPI_CALL(env, napi_coerce_to_string(env, message, &message));
     }
 
+    length = length_copied = 0;
+    NAPI_CALL(env, napi_get_value_string_utf8(env, message, NULL, 0, &length));
+    std::unique_ptr<char[]> unique_msg_buf(new char[length + 1]());
+    char* msg_buf = unique_msg_buf.get();
+    NAPI_CALL(env, napi_get_value_string_utf8(env, message, msg_buf, length + 1, &length_copied));
+    NAPI_ASSERT(env, length_copied == length, "Couldn't fully copy the message.");
+
+    NAPI_ASSERT(env, embedder_callback, "No callback is set in native code to receive the message.");
+    if (embedder_callback) {
+        embedder_callback(channel_name_utf8, msg_buf);
+    }
     return nullptr;
 }
 
@@ -236,25 +311,22 @@ napi_value Init(napi_env env, napi_value exports) {
     napi_status status;
     napi_property_descriptor properties[] = {
         DECLARE_NAPI_METHOD("sendMessage", Method_SendMessage),
-        DECLARE_NAPI_METHOD("registerListener", Method_RegisterListener),
+        DECLARE_NAPI_METHOD("registerChannel", Method_RegisterChannel),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(properties) / sizeof(*properties), properties));
     return exports;
 }
 
-void rn_bridge_notify(const char *message) {
+/**
+ * This method is the public API called by the React Native plugin
+ */
+void rn_bridge_notify(const char* channelName, const char *message) {
     int messageLength=strlen(message);
-    char* messageCopy = (char*)calloc(sizeof(char),messageLength+1);
+    char* messageCopy = (char*)calloc(sizeof(char),messageLength + 1);
+    strncpy(messageCopy, message, messageLength);
 
-    strncpy(messageCopy,message,messageLength);
-
-    queueLock.lock();
-    messageQueue.push(messageCopy);
-    queueLock.unlock();
-
-    //lock
-    if(queue_uv_handle!=NULL)
-        uv_async_send(queue_uv_handle);
+    Channel* channel = GetOrCreateChannel(std::string(channelName));
+    channel->queueMessage(messageCopy);
 }
 
 NAPI_MODULE_X(rn_bridge, Init, NULL, NM_F_BUILTIN)

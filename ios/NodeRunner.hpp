@@ -10,8 +10,8 @@
 + (NodeRunner*) sharedInstance;
 - (void) startEngineWithArguments:(NSArray*)arguments:(NSString*)builtinModulesPath;
 - (void) setCurrentRNNodeJsMobile:(RNNodeJsMobile*)module;
-- (void) sendMessageToNode:(NSString*)message;
-- (void) sendMessageBackToReact:(NSString*)message;
+- (void) sendMessageToNode:(NSString*)channelName:(NSString*)message;
+- (void) sendMessageBackToReact:(NSString*)channelName:(NSString*)message;
 @property(assign, nonatomic, readwrite) bool startedNodeAlready;
 @end
 

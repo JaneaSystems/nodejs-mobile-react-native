@@ -41,10 +41,10 @@ NSString* nodePath;
 
 RCT_EXPORT_MODULE()
 
-RCT_EXPORT_METHOD(sendMessage:(NSString *)script)
+RCT_EXPORT_METHOD(sendMessage:(NSString *)channelName:(NSString *)message)
 {
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-    [[NodeRunner sharedInstance] sendMessageToNode:script];
+    [[NodeRunner sharedInstance] sendMessageToNode:channelName:message];
   });
 }
 
@@ -138,11 +138,11 @@ RCT_EXPORT_METHOD(startNodeProject:(NSString *)mainFileName options:(NSDictionar
   }
 }
 
--(void) sendMessageBackToReact:(NSString*)message
+-(void) sendMessageBackToReact:(NSString*)channelName:(NSString*)message
 {
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
     [self.bridge.eventDispatcher sendAppEventWithName:@"nodejs-mobile-react-native-message"
-      body:@{@"message": message}
+      body:@{@"channelName": channelName, @"message": message}
     ];
   });
 }

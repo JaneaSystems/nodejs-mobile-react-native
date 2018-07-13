@@ -3,15 +3,11 @@
 #include <string>
 #include "rn-bridge.h"
 
-void notifyNode(const char* msg)
-{
-  rn_bridge_notify(msg);
-}
-
-void rcv_message(char* msg) {
+void rcv_message(const char* channelName, const char* msg) {
   @autoreleasepool {
+    NSString* objectiveCChannelName=[NSString stringWithUTF8String:channelName];
     NSString* objectiveCMessage=[NSString stringWithUTF8String:msg];
-    [[NodeRunner sharedInstance] sendMessageBackToReact:objectiveCMessage];
+    [[NodeRunner sharedInstance] sendMessageBackToReact:objectiveCChannelName:objectiveCMessage];
   }
 }
 
@@ -46,16 +42,17 @@ void rcv_message(char* msg) {
   _currentModuleInstance=module;
 }
 
--(void) sendMessageToNode:(NSString*)message
+-(void) sendMessageToNode:(NSString*)channelName:(NSString*)message
 {
+  const char* c_channelName=[channelName UTF8String];
   const char* c_message=[message UTF8String];
-  notifyNode(c_message);
+  rn_bridge_notify(c_channelName, c_message);
 }
 
--(void) sendMessageBackToReact:(NSString*)message
+-(void) sendMessageBackToReact:(NSString*)channelName:(NSString*)message
 {
   if(_currentModuleInstance!=nil) {
-    [_currentModuleInstance sendMessageBackToReact:message];
+    [_currentModuleInstance sendMessageBackToReact:channelName:message];
   }
 }
 

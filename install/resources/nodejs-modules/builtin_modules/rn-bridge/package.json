@@ -1,6 +1,6 @@
 {
   "name": "rn-bridge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "NodeJS for Mobile React Native Bridge",
   "main": "index.js",
   "scripts": {

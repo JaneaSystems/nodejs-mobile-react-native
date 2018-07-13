@@ -13,12 +13,15 @@ JNIEnv* cacheEnvPointer=NULL;
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_janeasystems_rn_1nodejs_1mobile_RNNodeJsMobileModule_notifyNode(
+Java_com_janeasystems_rn_1nodejs_1mobile_RNNodeJsMobileModule_sendMessageToNodeChannel(
         JNIEnv *env,
         jobject /* this */,
+        jstring channelName,
         jstring msg) {
+    const char* nativeChannelName = env->GetStringUTFChars(channelName, 0);
     const char* nativeMessage = env->GetStringUTFChars(msg, 0);
-    rn_bridge_notify(nativeMessage);
+    rn_bridge_notify(nativeChannelName, nativeMessage);
+    env->ReleaseStringUTFChars(channelName,nativeChannelName);
     env->ReleaseStringUTFChars(msg,nativeMessage);
 }
 
@@ -50,15 +53,17 @@ Java_com_janeasystems_rn_1nodejs_1mobile_RNNodeJsMobileModule_getCurrentABIName(
 
 #define APPNAME "RNBRIDGE"
 
-void rcv_message(char* msg) {
+void rcv_message(const char* channel_name, const char* msg) {
   JNIEnv *env=cacheEnvPointer;
   if(!env) return;
   jclass cls2 = env->FindClass("com/janeasystems/rn_nodejs_mobile/RNNodeJsMobileModule");  // try to find the class
   if(cls2 != nullptr) {
-    jmethodID m_sendMessage = env->GetStaticMethodID(cls2, "sendMessageBackToReact", "(Ljava/lang/String;)V");  // find method
+    jmethodID m_sendMessage = env->GetStaticMethodID(cls2, "sendMessageBackToReact", "(Ljava/lang/String;Ljava/lang/String;)V");  // find method
     if(m_sendMessage != nullptr) {
+        jstring java_channel_name=env->NewStringUTF(channel_name);
         jstring java_msg=env->NewStringUTF(msg);
-        env->CallStaticVoidMethod(cls2, m_sendMessage,java_msg);                      // call method
+        env->CallStaticVoidMethod(cls2, m_sendMessage, java_channel_name, java_msg);                      // call method
+        env->DeleteLocalRef(java_channel_name);
         env->DeleteLocalRef(java_msg);
     }
   }
