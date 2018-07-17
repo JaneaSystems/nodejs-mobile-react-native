@@ -128,6 +128,8 @@ class SystemEventLock {
 class SystemChannel extends ChannelSuper {
   constructor(name) {
     super(name);
+    // datadir should not change during runtime, so we cache it.
+    this._cacheDataDir = null;
   };
 
   emitWrapper(type) {
@@ -163,6 +165,13 @@ class SystemChannel extends ChannelSuper {
     this.emitWrapper(data);
   };
 
+  // Get a writable data directory for persistent file storage.
+  datadir() {
+    if (this._cacheDataDir === null) {
+      this._cacheDataDir = NativeBridge.getDataDir();
+    }
+    return this._cacheDataDir;
+  }
 };
 /**
  * Manage the registered channels to emit events/messages received by the

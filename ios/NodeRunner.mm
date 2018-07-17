@@ -49,6 +49,9 @@ void rcv_message(const char* channelName, const char* msg) {
   [[NSNotificationCenter defaultCenter] addObserver:self
                                         selector:@selector(onResume)
                                         name:UIApplicationWillEnterForegroundNotification object:nil];
+  // Register the Documents Directory as the node dataDir.
+  NSString* nodeDataDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+  rn_register_node_data_dir_path([nodeDataDir UTF8String]);
   return self;
 }
 

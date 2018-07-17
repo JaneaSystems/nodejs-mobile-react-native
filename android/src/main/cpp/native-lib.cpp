@@ -51,6 +51,17 @@ Java_com_janeasystems_rn_1nodejs_1mobile_RNNodeJsMobileModule_getCurrentABIName(
     return env->NewStringUTF(CURRENT_ABI_NAME);
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_janeasystems_rn_1nodejs_1mobile_RNNodeJsMobileModule_registerNodeDataDirPath(
+    JNIEnv *env,
+    jobject /* this */,
+    jstring dataDir) {
+  const char* nativeDataDir = env->GetStringUTFChars(dataDir, 0);
+  rn_register_node_data_dir_path(nativeDataDir);
+  env->ReleaseStringUTFChars(dataDir, nativeDataDir);
+}
+
 #define APPNAME "RNBRIDGE"
 
 void rcv_message(const char* channel_name, const char* msg) {

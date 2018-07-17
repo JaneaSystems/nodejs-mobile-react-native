@@ -18,6 +18,8 @@ import android.content.res.AssetManager;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
+import android.system.Os;
+import android.system.ErrnoException;
 
 import java.io.*;
 import java.util.*;
@@ -73,6 +75,16 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule implements 
     builtinModulesPath = filesDirPath + "/" + NODEJS_BUILTIN_MODULES;
     trashDirPath = filesDirPath + "/" + TRASH_DIR;
     nativeAssetsPath = BUILTIN_NATIVE_ASSETS_PREFIX + getCurrentABIName();
+
+    // Sets the TMPDIR environment to the cacheDir, to be used in Node as os.tmpdir
+    try {
+      Os.setenv("TMPDIR", reactContext.getCacheDir().getAbsolutePath(), true);
+    } catch (ErrnoException e) {
+      e.printStackTrace();
+    }
+
+    // Register the filesDir as the Node data dir.
+    registerNodeDataDirPath(filesDirPath);
 
     asyncInit();
   }
@@ -240,6 +252,8 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule implements 
       }).start();
     }
   }
+
+  public native void registerNodeDataDirPath(String dataDir);
 
   public native String getCurrentABIName();
 
