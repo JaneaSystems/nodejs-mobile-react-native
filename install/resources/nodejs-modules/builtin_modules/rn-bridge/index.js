@@ -10,6 +10,12 @@ const NativeBridge = process.binding('rn_bridge');
 const EVENT_CHANNEL = '_EVENTS_';
 
 /**
+ * Built-in, one-way event channel reserved for sending events from
+ * the react-native plug-in native layer to the Node.js app.
+ */
+const SYSTEM_CHANNEL = '_SYSTEM_';
+
+/**
  * This class is defined in the plugin's root index.js as well.
  * Any change made here should be ported to the root index.js too.
  * The MessageCodec class provides two static methods to serialize/deserialize
@@ -88,12 +94,68 @@ class EventChannel extends ChannelSuper {
 };
 
 /**
+ * System event Lock class
+ * Helper class to handle lock acquisition and release in system event handlers.
+ * Will call a callback after every lock has been released.
+ **/
+class SystemEventLock {
+  constructor(callback, startingLocks) {
+    this._locksAcquired = startingLocks; // Start with one lock.
+    this._callback = callback; // Callback to call after all locks are released.
+    this._hasReleased = false; // To stop doing anything after it's supposed to serve its purpose.
+    this._checkRelease(); // Initial check. If it's been started with no locks, can be released right away.
+  }
+  // Release a lock and call the callback if all locks have been released.
+  release() {
+    if (this._hasReleased) return;
+    this._locksAcquired--;
+    this._checkRelease();
+  }
+  // Check if the lock can be released and release it.
+  _checkRelease() {
+    if(this._locksAcquired<=0) {
+      this._hasReleased=true;
+      this._callback();
+    }
+  }
+
+}
+
+/**
  * System channel class.
  * Emit pause/resume events when the app goes to background/foreground.
  */
 class SystemChannel extends ChannelSuper {
   constructor(name) {
     super(name);
+  };
+
+  emitWrapper(type) {
+    // Overload the emitWrapper to handle the pause event locks.
+    const _this = this;
+    if (type.startsWith('pause')) {
+      setImmediate( () => {
+        let releaseMessage = 'release-pause-event';
+        let eventArguments = type.split('|');
+        if (eventArguments.length >= 2) {
+          // The expected format for the release message is "release-pause-event|{eventId}"
+          // eventId comes from the pause event, with the format "pause|{eventId}"
+          releaseMessage = releaseMessage + '|' + eventArguments[1];
+        }
+        // Create a lock to signal the native side after the app event has been handled.
+        let eventLock = new SystemEventLock(
+          () => {
+            NativeBridge.sendMessage(_this.name, releaseMessage);
+          }
+          , _this.listenerCount("pause") // A lock for each current event listener. All listeners need to call release().
+        );
+        _this.emitLocal("pause", eventLock);
+      });
+    } else {
+      setImmediate( () => {
+        _this.emitLocal(type);
+      });
+    }
   };
 
   processData(data) {
@@ -129,6 +191,15 @@ function registerChannel(channel) {
   channels[channel.name] = channel;
   NativeBridge.registerChannel(channel.name, bridgeListener);
 };
+
+/**
+ * Module exports.
+ */
+const systemChannel = new SystemChannel(SYSTEM_CHANNEL);
+registerChannel(systemChannel);
+
+// Signal we are ready for app events, so the native code won't lock before node is ready to handle those.
+NativeBridge.sendMessage(SYSTEM_CHANNEL, "ready-for-app-events");
 
 const eventChannel = new EventChannel(EVENT_CHANNEL);
 registerChannel(eventChannel);

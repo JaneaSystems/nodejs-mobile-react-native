@@ -20,7 +20,7 @@ NSString* nodePath;
 
 + (BOOL)requiresMainQueueSetup
 {
-    return NO;
+    return YES;
 }
 
 - (id)init
@@ -30,7 +30,7 @@ NSString* nodePath;
   {
     [[NodeRunner sharedInstance] setCurrentRNNodeJsMobile:self];
   }
-  
+
   NSString* builtinModulesPath = [[NSBundle mainBundle] pathForResource:BUILTIN_MODULES_RESOURCE_PATH ofType:@""];
   nodePath = [[NSBundle mainBundle] pathForResource:NODEJS_PROJECT_RESOURCE_PATH ofType:@""];
   nodePath = [nodePath stringByAppendingString:@":"];

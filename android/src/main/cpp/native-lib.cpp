@@ -58,7 +58,7 @@ void rcv_message(const char* channel_name, const char* msg) {
   if(!env) return;
   jclass cls2 = env->FindClass("com/janeasystems/rn_nodejs_mobile/RNNodeJsMobileModule");  // try to find the class
   if(cls2 != nullptr) {
-    jmethodID m_sendMessage = env->GetStaticMethodID(cls2, "sendMessageBackToReact", "(Ljava/lang/String;Ljava/lang/String;)V");  // find method
+    jmethodID m_sendMessage = env->GetStaticMethodID(cls2, "sendMessageToApplication", "(Ljava/lang/String;Ljava/lang/String;)V");  // find method
     if(m_sendMessage != nullptr) {
         jstring java_channel_name=env->NewStringUTF(channel_name);
         jstring java_msg=env->NewStringUTF(msg);

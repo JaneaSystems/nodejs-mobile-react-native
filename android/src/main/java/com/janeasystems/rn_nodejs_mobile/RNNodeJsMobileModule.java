@@ -9,6 +9,7 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.LifecycleEventListener;
 import javax.annotation.Nullable;
 import android.util.Log;
 
@@ -22,7 +23,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
-public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
+public class RNNodeJsMobileModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
   private final ReactApplicationContext reactContext;
   private static final String TAG = "NODEJS-RN";
@@ -32,6 +33,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
   private static final String SHARED_PREFS = "NODEJS_MOBILE_PREFS";
   private static final String LAST_UPDATED_TIME = "NODEJS_MOBILE_APK_LastUpdateTime";
   private static final String BUILTIN_NATIVE_ASSETS_PREFIX = "nodejs-native-assets-";
+  private static final String SYSTEM_CHANNEL = "_SYSTEM_";
 
   private static String trashDirPath;
   private static String filesDirPath;
@@ -45,6 +47,9 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
   private static boolean initCompleted = false;
 
   private static AssetManager assetManager;
+
+  // Flag to indicate if node is ready to receive app events.
+  private static boolean nodeIsReadyForAppEvents = false;
 
   static {
     System.loadLibrary("nodejs-mobile-react-native-native-lib");
@@ -60,6 +65,7 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
   public RNNodeJsMobileModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
+    reactContext.addLifecycleEventListener(this);
     filesDirPath = reactContext.getFilesDir().getAbsolutePath();
 
     // The paths where we expect the node project assets to be at runtime.
@@ -180,6 +186,41 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule {
     reactContext
       .getJSModule(RCTNativeAppEventEmitter.class)
       .emit(eventName, params);
+  }
+
+  public static void sendMessageToApplication(String channelName, String msg) {
+    if (channelName.equals(SYSTEM_CHANNEL)) {
+      // If it's a system channel call, handle it in the plugin native side.
+      handleAppChannelMessage(msg);
+    } else {
+      // Otherwise, send it to React Native.
+      sendMessageBackToReact(channelName, msg);
+    }
+  }
+
+  @Override
+  public void onHostPause() {
+    if (nodeIsReadyForAppEvents) {
+      sendMessageToNodeChannel(SYSTEM_CHANNEL, "pause");
+    }
+  }
+
+  @Override
+  public void onHostResume() {
+    if (nodeIsReadyForAppEvents) {
+      sendMessageToNodeChannel(SYSTEM_CHANNEL, "resume");
+    }
+  }
+
+  @Override
+  public void onHostDestroy() {
+      // Activity `onDestroy`
+  }
+
+  public static void handleAppChannelMessage(String msg) {
+    if (msg.equals("ready-for-app-events")) {
+      nodeIsReadyForAppEvents=true;
+    }
   }
 
   // Called from JNI when node sends a message through the bridge.
