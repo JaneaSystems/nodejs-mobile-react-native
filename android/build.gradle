@@ -11,13 +11,15 @@ buildscript {
 
 apply plugin: 'com.android.library'
 
+def _nodeTargetSdkVersion = ((rootProject?.ext?.properties?.targetSdkVersion) ?: 22)
+
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    compileSdkVersion ((rootProject?.ext?.properties?.compileSdkVersion) ?: 23)
+    buildToolsVersion ((rootProject?.ext?.properties?.buildToolsVersion) ?: "23.0.1")
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 22
+        minSdkVersion ((rootProject?.ext?.properties?.minSdkVersion) ?: 16)
+        targetSdkVersion _nodeTargetSdkVersion
         versionCode 1
         versionName "1.0"
         externalNativeBuild {
@@ -297,7 +299,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
         task "MakeToolchain${abi_name}" (type:Exec) {
             description = "Building a native toolchain to compile nodejs-mobile native modules for ${abi_name}."
             executable = "${ndk_bundle_path}/build/tools/make-standalone-toolchain.sh"
-            args "--toolchain=${temp_toolchain_name}-${temp_cc_ver}", "--arch=${temp_arch}", "--install-dir=${standalone_toolchain}", "--stl=libc++", "--force", "--platform=android-22"
+            args "--toolchain=${temp_toolchain_name}-${temp_cc_ver}", "--arch=${temp_arch}", "--install-dir=${standalone_toolchain}", "--stl=libc++", "--force", "--platform=android-${_nodeTargetSdkVersion}"
             outputs.file "${standalone_toolchain}"
         }
 
