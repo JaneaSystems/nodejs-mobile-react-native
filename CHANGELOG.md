@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.2.1">0.2.1</a><br/>
 <a href="#0.2.0">0.2.0</a><br/>
 <a href="#0.1.4">0.1.4</a><br/>
 <a href="#0.1.3">0.1.3</a><br/>
@@ -15,8 +16,21 @@
 </tr>
 </table>
 
+<a id="0.2.1"></a>
+## 2018-07-30, Version 0.2.1 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile` binaries to `v0.1.7`, built with NDK r17b, to solve Android 7 C++ STL runtime issues.
+* Use project-wide properties from react-native, for compatibility with recent react-native releases.
+
+### Commits
+
+* [[`f813ec9`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/f813ec973879506b52ba73b57928deaf8ab0e51e)] - core: update nodejs-mobile v0.1.7 (Jaime Bernardo)
+* [[`5e35c75`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/5e35c750f706d600440e4b69b97303e82ae1847c)] - android: use react-native project-wide properties (Jaime Bernardo)
+
 <a id="0.2.0"></a>
-## 2018-07-09, Version 0.2.0 (Current)
+## 2018-07-09, Version 0.2.0
 
 ### Notable Changes
 
