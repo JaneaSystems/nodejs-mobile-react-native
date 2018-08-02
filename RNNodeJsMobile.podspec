@@ -9,11 +9,17 @@ Pod::Spec.new do |s|
   s.homepage              = package['homepage']
   s.authors               = package['author']
   s.summary               = package['description']
-  s.source                = { :git => package['repository']['url'] }
-  s.source_files          = 'ios/*.{h,m,mm}'
-  s.source_files          = 'ios/**/**/*.{h}'
+  s.source                = { :git => 'https://github.com/jgtoriginal/RNNodeJsMobile.git', :tag => 'master' }
+  s.source_files          = [
+				'ios/*.{h,m,mm,hpp,cpp}', 
+				'ios/NodeMobile.framework/Headers/*.{h}', 
+				'ios/libnode/include/node/*.{h}', 
+				'ios/libnode/include/node/**/*.{h}', 
+				'ios/libRNNodeJsMobile.a'
+			    ]
   s.platform              = :ios, '8.0'
   s.static_framework      = true
   s.cocoapods_version     = ">= 1.2.0"
+  s.dependency            'AFNetworking', '~> 3.2.1'
   s.dependency            'React'
 end
