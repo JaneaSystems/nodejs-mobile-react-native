@@ -399,6 +399,8 @@ public class RNNodeJsMobileModule extends ReactContextBaseJavaModule implements 
         line = reader.readLine();
       }
       reader.close();
+    } catch (FileNotFoundException e) {
+      Log.d(TAG, "File not found: " + filename);
     } catch (IOException e) {
       lines = new ArrayList();
       e.printStackTrace();
