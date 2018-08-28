@@ -273,6 +273,14 @@ Returns a writable path used for persistent data storage in the application. Its
 
 The messages sent through the channel can be of any type that can be correctly serialized with [`JSON.stringify`](https://www.w3schools.com/js/js_json_stringify.asp) on one side and deserialized with [`JSON.parse`](https://www.w3schools.com/js/js_json_parse.asp) on the other side, as it is what the channel does internally. This means that passing JS dates through the channel will convert them to strings and functions will be removed from their containing objects. In line with [The JSON Data Interchange Syntax Standard](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf), the channel supports sending messages that are composed of these JS types: `Boolean`, `Number`, `String`, `Object`, `Array`.
 
+## Notes about other node APIs
+
+### os.tmpdir()
+
+On iOS, `os.tmpdir()` returns a temporary directory, since iOS sets the `TMPDIR` environment variable of the application to the equivalent of calling `NSTemporaryDirectory`.
+
+The Android OS doesn't define a temporary directory for the system or application, so the plugin sets the `TMPDIR` environment variable to the value of the application context's `CacheDir` value.
+
 ## Troubleshooting
 
 On Android applications, the `react-native` build process is sometimes unable to rebuild assets.
