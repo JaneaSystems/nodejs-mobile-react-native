@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.3.0">0.3.0</a><br/>
 <a href="#0.2.1">0.2.1</a><br/>
 <a href="#0.2.0">0.2.0</a><br/>
 <a href="#0.1.4">0.1.4</a><br/>
@@ -16,8 +17,24 @@
 </tr>
 </table>
 
+<a id="0.3.0"></a>
+## 2018-09-03, Version 0.3.0 (Current)
+
+### Notable Changes
+
+* Add new channel APIs.
+
+### Commits
+
+* [[`085e047`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/085e04762b98859354738611cd4e9fc0828c679e)] - docs: document os.tmpdir behavior in node (Jaime Bernardo)
+* [[`2ccc542`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/2ccc54290d59cc014d930d1b4bac7c8486bc6316)] - android: show alternative to misleading error log (Jaime Bernardo)
+* [[`ff308a6`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/ff308a6107c1857e7ec94599420ede1b712e0931)] - docs: document the new channel API, app channel (Jaime Bernardo)
+* [[`1116698`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/11166985ef65b253fcb7080289619c31466ead7a)] - plugin: add app.datadir API to get writable path (Jaime Bernardo)
+* [[`10c1d3e`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/10c1d3e75af44f1f5b473c0dba552363e13cfe49)] - plugin: add app channel for pause-resume events (Jaime Bernardo)
+* [[`7c922f9`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/7c922f9751e577154cbc95215bb8c83dbe2254b1)] - plugin: improved events channel (Jaime Bernardo)
+
 <a id="0.2.1"></a>
-## 2018-07-30, Version 0.2.1 (Current)
+## 2018-07-30, Version 0.2.1
 
 ### Notable Changes
 
