@@ -47,6 +47,8 @@ rn_bridge.channel.on('message', (msg) => {
 rn_bridge.channel.send("Node was initialized.");
 ```
 
+Recent versions of `react-native` (since 0.57) throw an error during the bundling of the project. Please look at [the Troubleshooting Duplicate module name section](#duplicate-module-name) for instructions on how to configure the `react-native` bundler to ignore the `nodejs-project` folder.
+
 The Node.js runtime accesses files through Unix-based pathnames, so in Android the node project is copied from the project's apk assets into the default application data folder at startup, during the first run or after an update, under `nodejs-project/`.
 
 > Attention: Given the project folder will be overwritten after each application update, it should not be used for persistent storage.
@@ -300,6 +302,43 @@ cd android
 ./gradlew clean
 cd ..
 react-native run-android
+```
+
+### Duplicate module name
+
+During the `react-native` application's build process, the `nodejs-project` gets copied to the application's assets, where they'll be used by `nodejs-mobile`.
+The `react-native` packager monitors the project's folder for javascript packages and may throw a "`Error: jest-haste-map: @providesModule naming collision`" error.
+
+To avoid this error, instruct the `react-native` packager to ignore the `nodejs-project` and the platform folders where it is copied to. Create a `rn-cli.config.js` file in your `react-native` project's root path with the following contents if you're using recent versions of `react-native` (`>= v0.57`):
+
+```js
+const blacklist = require('metro-config/src/defaults/blacklist');
+
+module.exports = {
+  resolver:{
+    blacklistRE: blacklist([
+      /nodejs-assets\/.*/,
+      /android\/.*/,
+      /ios\/.*/
+    ])
+  },
+};
+
+```
+
+These are the contents of `rn-cli.config.js` if `react-native < v0.57`:
+```js
+const blacklist = require('metro/src/blacklist');
+
+module.exports = {
+  getBlacklistRE: function() {
+    return blacklist([
+      /nodejs-assets\/.*/,
+      /android\/.*/,
+      /ios\/.*/
+    ]);
+  },
+};
 ```
 
 ## Changelog
