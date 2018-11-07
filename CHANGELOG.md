@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.3.1">0.3.1</a><br/>
 <a href="#0.3.0">0.3.0</a><br/>
 <a href="#0.2.1">0.2.1</a><br/>
 <a href="#0.2.0">0.2.0</a><br/>
@@ -17,8 +18,20 @@
 </tr>
 </table>
 
+<a id="0.3.1"></a>
+## 2018-11-07, Version 0.3.1 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile` binaries to `v0.1.8`, fixing exceptions on Apple A12 CPUs for iOS and being built with NDK r18b for Android.
+
+### Commits
+
+* [[`0e6ffe9`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/0e6ffe9cfb26bf0fa2b8ba8a823067d4ad35ab9c)] - core: update nodejs-mobile v0.1.8 (Jaime Bernardo)
+* [[`ed727ed`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/ed727edea17e8a9e1a85cef3413becc83b8a0328)] - docs: duplicate module name instructions (Jaime Bernardo)
+
 <a id="0.3.0"></a>
-## 2018-09-03, Version 0.3.0 (Current)
+## 2018-09-03, Version 0.3.0
 
 ### Notable Changes
 
