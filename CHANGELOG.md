@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.3.2">0.3.2</a><br/>
 <a href="#0.3.1">0.3.1</a><br/>
 <a href="#0.3.0">0.3.0</a><br/>
 <a href="#0.2.1">0.2.1</a><br/>
@@ -18,8 +19,19 @@
 </tr>
 </table>
 
+<a id="0.3.2"></a>
+## 2018-11-21, Version 0.3.2 (Current)
+
+### Notable Changes
+
+* Hotfixes the node thread stack size on iOS, when starting the runtime with a node project folder.
+
+### Commits
+
+* [[`082cbc0`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/082cbc0d4815d435a8c06cd34bea4c0a6d573dec)] - ios: set node project thread stack size to 2MB (Jaime Bernardo)
+
 <a id="0.3.1"></a>
-## 2018-11-07, Version 0.3.1 (Current)
+## 2018-11-07, Version 0.3.1
 
 ### Notable Changes
 
