@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.3.3">0.3.3</a><br/>
 <a href="#0.3.2">0.3.2</a><br/>
 <a href="#0.3.1">0.3.1</a><br/>
 <a href="#0.3.0">0.3.0</a><br/>
@@ -19,8 +20,21 @@
 </tr>
 </table>
 
+<a id="0.3.3"></a>
+## 2019-02-19, Version 0.3.3 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile` binaries to `v0.1.9`.
+* Add 64 bit binaries for Android.
+
+### Commits
+* [[`9357f13`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/9357f139e6c9594b1746c3672eb111d1a7c0c529)] - android: build native modules for every arch (Jaime Bernardo)
+* [[`fbab03e`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/fbab03e7372167a2ccba766d043a8559b309586e)] - android: add 64 bit binaries (Jaime Bernardo)
+* [[`db830fe`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/db830fe3ec75092c3b865d8ed1f1d8189aa0ec71)] - core: update nodejs-mobile v0.1.9 (Jaime Bernardo)
+
 <a id="0.3.2"></a>
-## 2018-11-21, Version 0.3.2 (Current)
+## 2018-11-21, Version 0.3.2
 
 ### Notable Changes
 
