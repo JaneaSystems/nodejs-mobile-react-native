@@ -2,8 +2,8 @@ var path = require('path');
 var fs = require('fs');
 var ncp = require('ncp');
 var xcode = require('xcode');
-const android = require('./../../../node_modules/react-native/local-cli/core/android');
-const ios = require('./../../../node_modules/react-native/local-cli/core/ios');
+const android = require('./../../../node_modules/@react-native-community/cli/build/core/android');
+const ios = require('./../../../node_modules/@react-native-community/cli/build/core/ios');
 
 function hostPackageDir(file) {
   var pathComponents = file.split(path.sep);
