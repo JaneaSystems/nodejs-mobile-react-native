@@ -2,8 +2,22 @@ var path = require('path');
 var fs = require('fs');
 var ncp = require('ncp');
 var xcode = require('xcode');
-const android = require('./../../../node_modules/react-native/local-cli/core/android');
-const ios = require('./../../../node_modules/react-native/local-cli/core/ios');
+
+var android;
+try {
+  android = require('./../../../node_modules/@react-native-community/cli/build/tools/android');
+} catch (ex) {
+  // Older version of react-native, try to load cli from inside react-native.
+  android = require('./../../../node_modules/react-native/local-cli/core/android');
+}
+
+var ios;
+try {
+  ios = require('./../../../node_modules/@react-native-community/cli/build/tools/ios');
+} catch (ex) {
+  // Older version of react-native, try to load cli from inside react-native.
+  ios = require('./../../../node_modules/react-native/local-cli/core/ios');
+}
 
 function hostPackageDir(file) {
   var pathComponents = file.split(path.sep);
