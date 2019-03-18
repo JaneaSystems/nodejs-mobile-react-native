@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.3.4">0.3.4</a><br/>
 <a href="#0.3.3">0.3.3</a><br/>
 <a href="#0.3.2">0.3.2</a><br/>
 <a href="#0.3.1">0.3.1</a><br/>
@@ -20,8 +21,18 @@
 </tr>
 </table>
 
+<a id="0.3.4"></a>
+## 2019-03-18, Version 0.3.4 (Current)
+
+### Notable Changes
+
+* Hotfix release: fix postlink script paths for `react-native >= 0.59`.
+
+### Commits
+* [[`ba9d5d4`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/ba9d5d48c413550a890aeb9ec2e895db93eeb5bb)] - plugin: update script paths for react-native 0.59 (Jaime Bernardo)
+
 <a id="0.3.3"></a>
-## 2019-02-19, Version 0.3.3 (Current)
+## 2019-02-19, Version 0.3.3
 
 ### Notable Changes
 
