@@ -326,6 +326,8 @@ module.exports = {
 
 ```
 
+If the project has a `metro.config.js` file, it will be picked up instead of `rn-cli.config.js` on newer versions of `react-native`. If that's the case, the `resolver` block has to be added to the `metro.config.js` file instead.
+
 These are the contents of `rn-cli.config.js` if `react-native < v0.57`:
 ```js
 const blacklist = require('metro/src/blacklist');
