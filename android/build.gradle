@@ -13,6 +13,35 @@ apply plugin: 'com.android.library'
 
 def _nodeTargetSdkVersion = ((rootProject?.ext?.properties?.targetSdkVersion) ?: 22)
 
+def DoesAppAlreadyDefineWantedSTL() {
+    // Since react-native 0.59.0, the Application already defines libc++_shared as the APP_STL.
+    // Defining it also in this plugin would lead to a build error when merging assets.
+    try {
+        def _reactAndroidPropertiesFile = file("${rootDir}/../node_modules/react-native/ReactAndroid/gradle.properties");
+        def _reactAndroidProperties = new Properties()
+        if (_reactAndroidPropertiesFile.exists())
+        {
+            _reactAndroidPropertiesFile.withInputStream { _reactAndroidProperties.load(it) }
+        }
+        def _semver = _reactAndroidProperties.getProperty("VERSION_NAME").tokenize('.');
+        if (_semver.size() != 3) {
+            return false
+        }
+        def _major = _semver[0].toInteger()
+        def _minor = _semver[1].toInteger()
+        if ( _major > 0 || (_major == 0 && _minor >= 59) ) {
+            return true
+        } else {
+            return false
+        }
+
+    } catch ( Exception e ) {
+        return false
+    }
+}
+
+def _isCorrectSTLDefinedByApp = DoesAppAlreadyDefineWantedSTL()
+
 android {
     compileSdkVersion ((rootProject?.ext?.properties?.compileSdkVersion) ?: 23)
     buildToolsVersion ((rootProject?.ext?.properties?.buildToolsVersion) ?: "23.0.1")
@@ -25,7 +54,9 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags ""
-                arguments "-DANDROID_STL=c++_shared"
+                if(!_isCorrectSTLDefinedByApp) {
+                    arguments "-DANDROID_STL=c++_shared"
+                }
             }
         }
         ndk {
