@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		339D56202017B27B003DFDA0 /* NodeMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 339D561F2017B27B003DFDA0 /* NodeMobile.framework */; };
-		33AE3DEB1F7A9C150051C3C6 /* rn-bridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33AE3DEA1F7A9C150051C3C6 /* rn-bridge.cpp */; };
+		33AE3DEB1F7A9C150051C3C6 /* rn-bridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33AE3DEA1F7A9C150051C3C6 /* rn-bridge.cpp */; settings = {COMPILER_FLAGS = "-I$(SRCROOT)/libnode/include/node/"; }; };
 		33C4E1FF1F7979160047084D /* NodeRunner.mm in Sources */ = {isa = PBXBuildFile; fileRef = 33C4E1FE1F7979160047084D /* NodeRunner.mm */; };
 		B3E7B58A1CC2AC0600A0062D /* RNNodeJsMobile.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNNodeJsMobile.m */; };
 /* End PBXBuildFile section */
@@ -234,17 +234,13 @@
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../React/**",
 					"$(SRCROOT)/../../react-native/React/**",
-					"$(SRCROOT)/libnode/include/**",
 				);
 				"HEADER_SEARCH_PATHS[arch=*]" = (
 					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../React/**",
 					"$(SRCROOT)/../../react-native/React/**",
-					"$(SRCROOT)/libnode/include/**",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
@@ -262,10 +258,8 @@
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../React/**",
 					"$(SRCROOT)/../../react-native/React/**",
-					"$(SRCROOT)/libnode/include/**",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
