@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.4.0">0.4.0</a><br/>
 <a href="#0.3.4">0.3.4</a><br/>
 <a href="#0.3.3">0.3.3</a><br/>
 <a href="#0.3.2">0.3.2</a><br/>
@@ -21,8 +22,22 @@
 </tr>
 </table>
 
+<a id="0.4.0"></a>
+## 2019-04-04, Version 0.4.0 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile` binaries to `v0.2.0`, which updates the engine to `v10.13.0` LTS.
+
+### Commits
+
+* [[`844fce9`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/844fce9cf8329f2c816de4e7f2d1efeeeee88439)] - docs: mention metro.config.js in Troubleshooting (Jaime Bernardo)
+* [[`9655d3a`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/9655d3af08102a463891052772e848e94e4c14be)] - android: fix libc++_shared packaging in 0.59 (Jaime Bernardo)
+* [[`c6d9a23`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/c6d9a239d3422a78bcfe95ab745e4f06408a2379)] - android: fix gradle compile deprecation warning (Jaime Bernardo)
+* [[`81567e4`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/81567e4e605329a2659e9f7ec4c25ade20c4fdc5)] - core: update nodejs-mobile v0.2.0 (Jaime Bernardo)
+
 <a id="0.3.4"></a>
-## 2019-03-18, Version 0.3.4 (Current)
+## 2019-03-18, Version 0.3.4
 
 ### Notable Changes
 
