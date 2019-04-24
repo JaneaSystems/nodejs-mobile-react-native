@@ -16,6 +16,7 @@ function patchPackageJSON_preNodeGyp_modulePath(filePath)
     binaryPathConfiguration = binaryPathConfiguration.replace(/\{platform\}/g, "platform");
     binaryPathConfiguration = binaryPathConfiguration.replace(/\{arch\}/g, "arch");
     binaryPathConfiguration = binaryPathConfiguration.replace(/\{target_arch\}/g, "target_arch");
+    binaryPathConfiguration = binaryPathConfiguration.replace(/\{libc\}/g, "libc");
     packageJSON.binary.module_path = binaryPathConfiguration;
     let packageWriteData = JSON.stringify(packageJSON, null, 2);
     fs.writeFileSync(filePath, packageWriteData);
