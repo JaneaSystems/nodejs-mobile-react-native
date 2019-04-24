@@ -12,7 +12,12 @@ buildscript {
 apply plugin: 'com.android.library'
 
 def _nodeTargetSdkVersion = ((rootProject?.ext?.properties?.targetSdkVersion) ?: 22)
-
+def _nodeMinSdkVersion = ((rootProject?.ext?.properties?.minSdkVersion) ?: 16)
+def _compileNativeModulesSdkVersion = _nodeMinSdkVersion;
+if (_compileNativeModulesSdkVersion<21) {
+    // 21 is the minimum sdk version Node is built with.
+    _compileNativeModulesSdkVersion=21;
+}
 def DoesAppAlreadyDefineWantedSTL() {
     // Since react-native 0.59.0, the Application already defines libc++_shared as the APP_STL.
     // Defining it also in this plugin would lead to a build error when merging assets.
@@ -47,7 +52,7 @@ android {
     buildToolsVersion ((rootProject?.ext?.properties?.buildToolsVersion) ?: "23.0.1")
 
     defaultConfig {
-        minSdkVersion ((rootProject?.ext?.properties?.minSdkVersion) ?: 16)
+        minSdkVersion _nodeMinSdkVersion
         targetSdkVersion _nodeTargetSdkVersion
         versionCode 1
         versionName "1.0"
@@ -336,7 +341,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
         task "MakeToolchain${abi_name}" (type:Exec) {
             description = "Building a native toolchain to compile nodejs-mobile native modules for ${abi_name}."
             executable = "${ndk_bundle_path}/build/tools/make-standalone-toolchain.sh"
-            args "--toolchain=${temp_toolchain_name}-${temp_cc_ver}", "--arch=${temp_arch}", "--install-dir=${standalone_toolchain}", "--stl=libc++", "--force", "--platform=android-${_nodeTargetSdkVersion}"
+            args "--toolchain=${temp_toolchain_name}-${temp_cc_ver}", "--arch=${temp_arch}", "--install-dir=${standalone_toolchain}", "--stl=libc++", "--force", "--platform=android-${_compileNativeModulesSdkVersion}"
             outputs.file "${standalone_toolchain}"
         }
 
