@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.4.1">0.4.1</a><br/>
 <a href="#0.4.0">0.4.0</a><br/>
 <a href="#0.3.4">0.3.4</a><br/>
 <a href="#0.3.3">0.3.3</a><br/>
@@ -22,8 +23,22 @@
 </tr>
 </table>
 
+<a id="0.4.1"></a>
+## 2019-04-24, Version 0.4.1 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile` binaries to `v0.2.1`, fixing an App Store submission error.
+
+### Commits
+
+* [[`13e15a4`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/13e15a44d3af89454669ee2423642a67c592e376)] - plugin: patch node-pre-gyp libc replacement (Jaime Bernardo)
+* [[`bb93132`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/bb9313234715472229e16907f567deb95174f56b)] - android: use minSdkVersion to build native modules (Jaime Bernardo)
+* [[`5e37e7a`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/5e37e7a1ef7532afa78aededfb33f00643f839b8)] - core: update nodejs-mobile v0.2.1 (Jaime Bernardo)
+* [[`829ec3a`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/829ec3ad804aae958813026ab544055faf7dfbba)] - android: Use ReactModule annotation from 0.58 (André Staltz)
+
 <a id="0.4.0"></a>
-## 2019-04-04, Version 0.4.0 (Current)
+## 2019-04-04, Version 0.4.0
 
 ### Notable Changes
 
