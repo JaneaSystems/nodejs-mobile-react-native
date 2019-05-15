@@ -249,6 +249,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
         String temp_v8_arch;
         String temp_suffix;
         String temp_toolchain_name;
+        String cargo_build_target;
         switch ( temp_arch )
         {
             case 'arm':
@@ -256,24 +257,28 @@ if ("1".equals(shouldRebuildNativeModules)) {
                 temp_v8_arch = "${temp_arch}"
                 temp_suffix = "${temp_arch}-linux-androideabi"
                 temp_toolchain_name = "${temp_suffix}"
+                cargo_build_target = 'arm-linux-androideabi'
                 break
             case 'x86':
                 temp_dest_cpu = 'ia32'
                 temp_v8_arch = 'ia32'
                 temp_suffix = 'i686-linux-android'
                 temp_toolchain_name = "${temp_arch}"
+                cargo_build_target = temp_suffix
                 break
             case 'x86_64':
                 temp_dest_cpu = 'x64'
                 temp_v8_arch = 'x64'
                 temp_suffix = "${temp_arch}-linux-android"
                 temp_toolchain_name = "${temp_arch}"
+                cargo_build_target = temp_suffix
                 break
             case 'arm64':
                 temp_dest_cpu = "${temp_arch}"
                 temp_v8_arch = "${temp_arch}"
                 temp_suffix = 'aarch64-linux-android'
                 temp_toolchain_name = 'aarch64'
+                cargo_build_target = temp_suffix
                 break
             default:
                 throw new GradleException("Unsupported architecture for nodejs-mobile native modules: ${temp_arch}")
@@ -287,6 +292,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
         String npm_toolchain_cc = "${standalone_toolchain}/bin/${temp_suffix}-clang"
         String npm_toolchain_cxx = "${standalone_toolchain}/bin/${temp_suffix}-clang++"
         String npm_toolchain_link = "${standalone_toolchain}/bin/${temp_suffix}-clang++"
+        String cargo_target_triple = cargo_build_target.toUpperCase().replaceAll('-', '_')
 
         String npm_gyp_defines = "target_arch=${temp_arch}"
         npm_gyp_defines += " v8_target_arch=${temp_v8_arch}"
@@ -373,6 +379,10 @@ if ("1".equals(shouldRebuildNativeModules)) {
             if(file(original_project_bin).exists()) {
                 environment ('PATH', "${original_project_bin}" + System.getProperty("path.separator") + "${System.env.PATH}")
             }
+
+            environment ('CARGO_BUILD_TARGET', "${cargo_build_target}")
+            environment ("CARGO_TARGET_${cargo_target_triple}_AR", "${npm_toolchain_ar}")
+            environment ("CARGO_TARGET_${cargo_target_triple}_LINKER", "${npm_toolchain_link}")
 
             environment ('TOOLCHAIN',"${standalone_toolchain}")
             environment ('AR',"${npm_toolchain_ar}")
