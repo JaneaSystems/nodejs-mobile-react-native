@@ -28,7 +28,7 @@
     "react-native": ">=0.52.0"
   },
   "dependencies": {
-    "nodejs-mobile-gyp": "^0.3.0",
+    "nodejs-mobile-gyp": "^0.3.1",
     "ncp": "^2.0.0",
     "mkdirp": "^0.5.1",
     "xcode": "^0.9.3"
