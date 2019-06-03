@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.4.2">0.4.2</a><br/>
 <a href="#0.4.1">0.4.1</a><br/>
 <a href="#0.4.0">0.4.0</a><br/>
 <a href="#0.3.4">0.3.4</a><br/>
@@ -23,8 +24,19 @@
 </tr>
 </table>
 
+<a id="0.4.2"></a>
+## 2019-06-03, Version 0.4.2 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile-gyp` to `v0.3.1`, fixing a potential security issue.
+
+### Commits
+
+* [[`14c5554`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/14c555472bb1626b8a0ed56bd5d72ce7ed37b646)] - plugin: update nodejs-mobile-gyp to 0.3.1 (Julia Friesel)
+
 <a id="0.4.1"></a>
-## 2019-04-24, Version 0.4.1 (Current)
+## 2019-04-24, Version 0.4.1
 
 ### Notable Changes
 
