@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.4.3">0.4.3</a><br/>
 <a href="#0.4.2">0.4.2</a><br/>
 <a href="#0.4.1">0.4.1</a><br/>
 <a href="#0.4.0">0.4.0</a><br/>
@@ -24,8 +25,19 @@
 </tr>
 </table>
 
+<a id="0.4.3"></a>
+## 2019-06-10, Version 0.4.3 (Current)
+
+### Notable Changes
+
+* Fix a compatibility issue with newer versions of Gradle when building for Android.
+
+### Commits
+
+* [[`aafb0a5`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/aafb0a56b6960b2b116ad9ef9b673738d99a4512)] - android: use input and output dir syntax in Gradle (Jaime Bernardo)
+
 <a id="0.4.2"></a>
-## 2019-06-03, Version 0.4.2 (Current)
+## 2019-06-03, Version 0.4.2
 
 ### Notable Changes
 
