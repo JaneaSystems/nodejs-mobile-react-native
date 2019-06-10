@@ -107,7 +107,7 @@ task CopyNodeProjectAssetsFolder (type:Sync) {
 task GenerateNodeProjectAssetsLists {
     dependsOn "CopyNodeProjectAssetsFolder"
     description "Generates a list for runtime copying"
-    inputs.file "${rootProject.buildDir}/nodejs-assets/"
+    inputs.dir "${rootProject.buildDir}/nodejs-assets/"
     outputs.file "${rootProject.buildDir}/nodejs-assets/file.list"
     outputs.file "${rootProject.buildDir}/nodejs-assets/dir.list"
     doLast{
@@ -342,7 +342,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
             description = "Building a native toolchain to compile nodejs-mobile native modules for ${abi_name}."
             executable = "${ndk_bundle_path}/build/tools/make-standalone-toolchain.sh"
             args "--toolchain=${temp_toolchain_name}-${temp_cc_ver}", "--arch=${temp_arch}", "--install-dir=${standalone_toolchain}", "--stl=libc++", "--force", "--platform=android-${_compileNativeModulesSdkVersion}"
-            outputs.file "${standalone_toolchain}"
+            outputs.dir "${standalone_toolchain}"
         }
 
         task "BuildNpmModules${abi_name}" (type:Exec) {
@@ -350,7 +350,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
             dependsOn "MakeToolchain${abi_name}"
             description = "Building native modules for ${abi_name}."
             inputs.file "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/copy.timestamp"
-            outputs.file "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
+            outputs.dir "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
             workingDir "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
             commandLine npmCommandName, '--verbose', 'rebuild', '--build-from-source'
             environment ('npm_config_node_engine', 'v8' )
@@ -393,7 +393,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
         task "GenerateNodeNativeAssetsLists${abi_name}" {
             dependsOn "CopyBuiltNpmAssets${abi_name}"
             description "Generates a list for runtime copying"
-            inputs.file "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/"
+            inputs.dir "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/"
             outputs.file "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/file.list"
             outputs.file "${rootProject.buildDir}/nodejs-native-assets/nodejs-native-assets-${abi_name}/dir.list"
             doLast{
