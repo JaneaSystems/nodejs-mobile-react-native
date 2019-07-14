@@ -5,7 +5,7 @@ declare module "nodejs-mobile-react-native" {
     channel: Channel;
   }
   export interface Channel {
-    addListener: (event: string, message: string, context?: any) => void;
+    addListener: (event: string, callback: (message?: string) => void, context?: any) => void;
     post: (event: string, message: string) => void;
     send: (message: string) => void;
   }
