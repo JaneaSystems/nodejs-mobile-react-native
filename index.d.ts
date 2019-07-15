@@ -44,7 +44,6 @@ declare module "nodejs-mobile-react-native" {
      * It is an alias for `nodejs.channel.post('message', ...message)`
      * - accepts any JS type that can be serialized with JSON.stringify and deserialized with JSON.parse
      * - can accept multiple message arguments
-     * @param event 
      * @param message can be of type: `boolean`, `number`, `string`, `object`, or `array`
      */
     send: (...message: any[]) => void;
