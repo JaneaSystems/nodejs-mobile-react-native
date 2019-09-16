@@ -9,7 +9,9 @@ We have a [central repo](https://github.com/janeasystems/nodejs-mobile/issues) w
 
 `$ npm install nodejs-mobile-react-native --save`
 
-`$ react-native link nodejs-mobile-react-native`
+For iOS, run `pod install` for linking the native code parts:
+
+`$ cd iOS && pod install`
 
 ### iOS
 
@@ -307,39 +309,24 @@ react-native run-android
 ### Duplicate module name
 
 During the `react-native` application's build process, the `nodejs-project` gets copied to the application's assets, where they'll be used by `nodejs-mobile`.
-The `react-native` packager monitors the project's folder for javascript packages and may throw a "`Error: jest-haste-map: @providesModule naming collision`" error.
+The `react-native` packager monitors the project's folder for javascript packages and may throw a "`jest-haste-map: Haste module naming collision`" error.
 
-To avoid this error, instruct the `react-native` packager to ignore the `nodejs-project` and the platform folders where it is copied to. Create a `rn-cli.config.js` file in your `react-native` project's root path with the following contents if you're using recent versions of `react-native` (`>= v0.57`):
+To avoid this error, instruct the `react-native` packager to ignore the `nodejs-project` and the platform folders where it is copied to. Edit the `metro.config.js` file in your `react-native` project's root path with the following contents if you're using recent versions of `react-native` (`>= v0.60`) and add the `blacklist` require and the following `resolver` to the module exports:
 
 ```js
 const blacklist = require('metro-config/src/defaults/blacklist');
 
 module.exports = {
-  resolver:{
+  resolver: {
     blacklistRE: blacklist([
-      /nodejs-assets\/.*/,
-      /android\/.*/,
-      /ios\/.*/
+      /\/nodejs-assets\/.*/,
+      /\/android\/.*/,
+      /\/ios\/.*/
     ])
   },
-};
 
-```
+...
 
-If the project has a `metro.config.js` file, it will be picked up instead of `rn-cli.config.js` on newer versions of `react-native`. If that's the case, the `resolver` block has to be added to the `metro.config.js` file instead.
-
-These are the contents of `rn-cli.config.js` if `react-native < v0.57`:
-```js
-const blacklist = require('metro/src/blacklist');
-
-module.exports = {
-  getBlacklistRE: function() {
-    return blacklist([
-      /nodejs-assets\/.*/,
-      /android\/.*/,
-      /ios\/.*/
-    ]);
-  },
 };
 ```
 
