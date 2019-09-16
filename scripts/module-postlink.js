@@ -5,7 +5,7 @@ var xcode = require('xcode');
 
 var android;
 try {
-  android = require('./../../../node_modules/@react-native-community/cli/build/tools/android');
+  android = require('./../../../node_modules/@react-native-community/cli-platform-android/build/index');
 } catch (ex) {
   // Older version of react-native, try to load cli from inside react-native.
   android = require('./../../../node_modules/react-native/local-cli/core/android');
@@ -13,7 +13,7 @@ try {
 
 var ios;
 try {
-  ios = require('./../../../node_modules/@react-native-community/cli/build/tools/ios');
+  ios = require('./../../../node_modules/@react-native-community/cli-platform-ios/build/index');
 } catch (ex) {
   // Older version of react-native, try to load cli from inside react-native.
   ios = require('./../../../node_modules/react-native/local-cli/core/ios');
