@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.5.0">0.5.0</a><br/>
 <a href="#0.4.3">0.4.3</a><br/>
 <a href="#0.4.2">0.4.2</a><br/>
 <a href="#0.4.1">0.4.1</a><br/>
@@ -25,8 +26,22 @@
 </tr>
 </table>
 
+<a id="0.5.0"></a>
+## 2019-09-17, Version 0.5.0 (Current)
+
+### Notable Changes
+
+* Support for `react-native v0.60+`, breaking compatibility with previous versions.
+* TypeScript type definitions added.
+
+### Commits
+
+* [[`7cd4a01`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/7cd4a01f41fd937628fff9e001de5eda6a001cb9)] - plugin: support react-native 0.60+ (Jaime Bernardo)
+* [[`dd7c67a`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/dd7c67a5d7bee803105e9370e020633e2a3a4131)] - plugin: add typescript type definitions (Ivan Schurawel)
+* [[`71c401d`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/71c401d0fe7aa6e7b0c5a330bed3645c7a1ea036)] - plugin: update xcode to 2.0.0 (Rajiv Shah)
+
 <a id="0.4.3"></a>
-## 2019-06-10, Version 0.4.3 (Current)
+## 2019-06-10, Version 0.4.3
 
 ### Notable Changes
 
