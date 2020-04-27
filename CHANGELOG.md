@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.6.0">0.6.0</a><br/>
 <a href="#0.5.0">0.5.0</a><br/>
 <a href="#0.4.3">0.4.3</a><br/>
 <a href="#0.4.2">0.4.2</a><br/>
@@ -26,8 +27,20 @@
 </tr>
 </table>
 
+<a id="0.6.0"></a>
+## 2020-04-27, Version 0.6.0 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile` binaries to `v0.3.0`, which updates the engine to `v12.16.0` LTS and uses V8 on iOS.
+
+### Commits
+
+* [[`1a58bcf`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/1a58bcf53321d83165b9f607587650a3a0bf8aba)] - core: update nodejs-mobile v0.3.0 (Jaime Bernardo)
+* [[`b12b309`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/b12b309f4da0d303a400c4bd6b2c74acaf1cfb32)] - android: rust cargo build environment variables (stoically)
+
 <a id="0.5.0"></a>
-## 2019-09-17, Version 0.5.0 (Current)
+## 2019-09-17, Version 0.5.0
 
 ### Notable Changes
 
