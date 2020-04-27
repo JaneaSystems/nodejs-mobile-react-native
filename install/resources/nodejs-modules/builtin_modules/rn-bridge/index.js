@@ -1,6 +1,6 @@
 
 const EventEmitter = require('events');
-const NativeBridge = process.binding('rn_bridge');
+const NativeBridge = process._linkedBinding('rn_bridge');
 
 /**
  * Built-in events channel to exchange events between the react-native app

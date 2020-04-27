@@ -1,7 +1,9 @@
+#define NAPI_VERSION 3
 #include "node_api.h"
 #include "uv.h"
 #include "rn-bridge.h"
 #define NM_F_BUILTIN 0x1
+#define NM_F_LINKED 0x2
 #include <map>
 #include <mutex>
 #include <queue>
@@ -353,5 +355,5 @@ void rn_bridge_notify(const char* channelName, const char *message) {
     channel->queueMessage(messageCopy);
 }
 
-NAPI_MODULE_X(rn_bridge, Init, NULL, NM_F_BUILTIN)
+NAPI_MODULE_X(rn_bridge, Init, NULL, NM_F_LINKED)
 
