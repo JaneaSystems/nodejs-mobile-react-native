@@ -17,6 +17,8 @@ For iOS, run `pod install` for linking the native code parts:
 
 Universal binaries are included in the plugin, so you can run in both iOS simulators and devices.
 
+`nodejs-mobile-react-native` supports iOS 11.0 or later. In order to archive the application, the deployment target needs to be `iOS 11.0` or later.
+
 ### Android
 
 You may need to open your app's `/android` folder in `Android Studio`, so that it detects, downloads and cofigures requirements that might be missing, like the `NDK` and `CMake` to build the native code part of the project.
