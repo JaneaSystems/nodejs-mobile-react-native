@@ -68,20 +68,20 @@ android {
             abiFilters = project(":app").android.defaultConfig.ndk.abiFilters
         }
     }
-    
+
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"
         }
     }
-    
+
     sourceSets {
         main {
             jniLibs.srcDirs 'libnode/bin/'
         }
         main.assets.srcDirs += '../install/resources/nodejs-modules'
     }
-    
+
     lintOptions {
         abortOnError false
     }
@@ -114,6 +114,8 @@ task GenerateNodeProjectAssetsLists {
         delete "${rootProject.buildDir}/nodejs-assets/file.list"
         delete "${rootProject.buildDir}/nodejs-assets/dir.list"
 
+        ArrayList<String> file_list_arr = new ArrayList<String>();
+        ArrayList<String> dir_list_arr = new ArrayList<String>();
         String file_list = "";
         String dir_list = "";
 
@@ -123,14 +125,26 @@ task GenerateNodeProjectAssetsLists {
         assets_tree.exclude('**/*~') // Exclude temporary files.
         assets_tree.visit { assetFile ->
             if (assetFile.isDirectory()) {
-                dir_list += "${assetFile.relativePath}\n"
+                dir_list_arr.add("${assetFile.relativePath}\n");
             } else {
-                file_list += "${assetFile.relativePath}\n"
+                file_list_arr.add("${assetFile.relativePath}\n");
             }
         }
+
+        //Ensure both files are ordered similarly across builds.
+        Collections.sort(file_list_arr);
+        Collections.sort(dir_list_arr);
+
         def file_list_path = new File( "${rootProject.buildDir}/nodejs-assets/file.list")
+        for (String file : file_list_arr){
+            file_list += file;
+        }
         file_list_path.write file_list
+
         def dir_list_path = new File( "${rootProject.buildDir}/nodejs-assets/dir.list")
+        for (String dir : dir_list_arr){
+            dir_list += dir;
+        }
         dir_list_path.write dir_list
     }
 }
