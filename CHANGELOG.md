@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.6.1">0.6.1</a><br/>
 <a href="#0.6.0">0.6.0</a><br/>
 <a href="#0.5.0">0.5.0</a><br/>
 <a href="#0.4.3">0.4.3</a><br/>
@@ -27,8 +28,21 @@
 </tr>
 </table>
 
+<a id="0.6.1"></a>
+## 2020-05-25, Version 0.6.1 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile` binaries to `v0.3.1`, which updates the engine to `v12.16.3` LTS.
+
+### Commits
+
+* [[`bfe78e7`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/bfe78e7c0a503193d9075e9809ebb17c33832e14)] - core: update nodejs-mobile v0.3.1 (Jaime Bernardo)
+* [[`736900c`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/736900c18c0cf69023180fc3964dde09ad35b4e0)] - android: build reproducible dir and file lists (Corey)
+* [[`b2d3fe9`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/b2d3fe943d8bc90f13542eeef9a9290c8b432ae1)] - doc: add mention to iOS 11.0 or later support (Jaime Bernardo)
+
 <a id="0.6.0"></a>
-## 2020-04-27, Version 0.6.0 (Current)
+## 2020-04-27, Version 0.6.0
 
 ### Notable Changes
 
