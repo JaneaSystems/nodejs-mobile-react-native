@@ -1,6 +1,6 @@
 {
   "name": "nodejs-mobile-react-native",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Node.js for Mobile Apps React Native plugin",
   "main": "index.js",
   "scripts": {

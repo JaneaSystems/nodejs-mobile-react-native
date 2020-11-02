@@ -6,6 +6,7 @@
 </tr>
 <tr>
 <td>
+<a href="#0.6.2">0.6.2</a><br/>
 <a href="#0.6.1">0.6.1</a><br/>
 <a href="#0.6.0">0.6.0</a><br/>
 <a href="#0.5.0">0.5.0</a><br/>
@@ -28,8 +29,21 @@
 </tr>
 </table>
 
+<a id="0.6.2"></a>
+## 2020-11-02, Version 0.6.2 (Current)
+
+### Notable Changes
+
+* Update `nodejs-mobile` binaries to `v0.3.2`, which updates the engine to `v12.19.0` LTS.
+* Support Rust neon-bindings for native modules on iOS.
+
+### Commits
+
+* [[`b8b7d60`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/b8b7d60be696d633f0b6e1ab34e36737309451a0)] - core: update nodejs-mobile v0.3.2 (Jaime Bernardo)
+* [[`7e40004`](https://github.com/janeasystems/nodejs-mobile-react-native/commit/7e4000466c93b2f053e2922e589de5bb4a5dac9d)] - ios: support neon-bindings (Rust) native modules (Andre Staltz)
+
 <a id="0.6.1"></a>
-## 2020-05-25, Version 0.6.1 (Current)
+## 2020-05-25, Version 0.6.1
 
 ### Notable Changes
 
