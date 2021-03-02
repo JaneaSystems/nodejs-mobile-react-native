@@ -316,7 +316,7 @@ The `react-native` packager monitors the project's folder for javascript package
 To avoid this error, instruct the `react-native` packager to ignore the `nodejs-project` and the platform folders where it is copied to. Edit the `metro.config.js` file in your `react-native` project's root path with the following contents if you're using recent versions of `react-native` (`>= v0.60`) and add the `blacklist` require and the following `resolver` to the module exports:
 
 ```js
-const blacklist = require('metro-config/src/defaults/blacklist');
+const blacklist = require('metro-config/src/defaults/exclusionList');
 
 module.exports = {
   resolver: {
