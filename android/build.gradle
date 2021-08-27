@@ -305,7 +305,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
         } else if (OperatingSystem.current().isLinux()) {
             temp_host_tag = 'linux-x86_64'
         } else {
-            throw new GradleException("Unsupported opperating system for nodejs-mobile native builds: ${OperatingSystem.current().getName()}")
+            throw new GradleException("Unsupported operating system for nodejs-mobile native builds: ${OperatingSystem.current().getName()}")
         }
 
         String ndk_bundle_path = android.ndkDirectory
