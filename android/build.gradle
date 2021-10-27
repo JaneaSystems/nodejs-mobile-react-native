@@ -261,51 +261,59 @@ if ("1".equals(shouldRebuildNativeModules)) {
         String temp_cc_ver = '4.9';
         String temp_dest_cpu;
         String temp_v8_arch;
-        String temp_suffix;
-        String temp_toolchain_name;
+        String temp_binutils_prefix;
+        String temp_compiler_prefix;
         String cargo_build_target;
         switch ( temp_arch )
         {
             case 'arm':
                 temp_dest_cpu = "${temp_arch}"
                 temp_v8_arch = "${temp_arch}"
-                temp_suffix = "${temp_arch}-linux-androideabi"
-                temp_toolchain_name = "${temp_suffix}"
+                temp_binutils_prefix = "arm-linux-androideabi"
+                temp_compiler_prefix = "armv7a-linux-androideabi${_compileNativeModulesSdkVersion}"
                 cargo_build_target = 'arm-linux-androideabi'
                 break
             case 'x86':
                 temp_dest_cpu = 'ia32'
                 temp_v8_arch = 'ia32'
-                temp_suffix = 'i686-linux-android'
-                temp_toolchain_name = "${temp_arch}"
-                cargo_build_target = temp_suffix
+                temp_binutils_prefix = "i686-linux-android"
+                temp_compiler_prefix = "i686-linux-android${_compileNativeModulesSdkVersion}"
+                cargo_build_target = "i686-linux-android"
                 break
             case 'x86_64':
                 temp_dest_cpu = 'x64'
                 temp_v8_arch = 'x64'
-                temp_suffix = "${temp_arch}-linux-android"
-                temp_toolchain_name = "${temp_arch}"
-                cargo_build_target = temp_suffix
+                temp_binutils_prefix = "x86_64-linux-android"
+                temp_compiler_prefix = "x86_64-linux-android${_compileNativeModulesSdkVersion}"
+                cargo_build_target = "x86_64-linux-android"
                 break
             case 'arm64':
                 temp_dest_cpu = "${temp_arch}"
                 temp_v8_arch = "${temp_arch}"
-                temp_suffix = 'aarch64-linux-android'
-                temp_toolchain_name = 'aarch64'
-                cargo_build_target = temp_suffix
+                temp_binutils_prefix = "aarch64-linux-android"
+                temp_compiler_prefix = "aarch64-linux-android${_compileNativeModulesSdkVersion}"
+                cargo_build_target = "aarch64-linux-android"
                 break
             default:
                 throw new GradleException("Unsupported architecture for nodejs-mobile native modules: ${temp_arch}")
                 break
         }
 
+        String temp_host_tag
+        if (OperatingSystem.current().isMacOsX()) {
+            temp_host_tag = 'darwin-x86_64'
+        } else if (OperatingSystem.current().isLinux()) {
+            temp_host_tag = 'linux-x86_64'
+        } else {
+            throw new GradleException("Unsupported operating system for nodejs-mobile native builds: ${OperatingSystem.current().getName()}")
+        }
+
         String ndk_bundle_path = android.ndkDirectory
-        String standalone_toolchain = "${rootProject.buildDir}/standalone-toolchains/${temp_toolchain_name}"
-        String npm_toolchain_add_to_path = "${rootProject.buildDir}/bin"
-        String npm_toolchain_ar = "${standalone_toolchain}/bin/${temp_suffix}-ar"
-        String npm_toolchain_cc = "${standalone_toolchain}/bin/${temp_suffix}-clang"
-        String npm_toolchain_cxx = "${standalone_toolchain}/bin/${temp_suffix}-clang++"
-        String npm_toolchain_link = "${standalone_toolchain}/bin/${temp_suffix}-clang++"
+        String toolchain_path = "${ndk_bundle_path}/toolchains/llvm/prebuilt/${temp_host_tag}"
+        String npm_toolchain_ar = "${toolchain_path}/bin/${temp_binutils_prefix}-ar"
+        String npm_toolchain_cc = "${toolchain_path}/bin/${temp_compiler_prefix}-clang"
+        String npm_toolchain_cxx = "${toolchain_path}/bin/${temp_compiler_prefix}-clang++"
+        String npm_toolchain_link = "${toolchain_path}/bin/${temp_compiler_prefix}-clang++"
         String cargo_target_triple = cargo_build_target.toUpperCase().replaceAll('-', '_')
 
         String npm_gyp_defines = "target_arch=${temp_arch}"
@@ -358,16 +366,8 @@ if ("1".equals(shouldRebuildNativeModules)) {
             }
         }
 
-        task "MakeToolchain${abi_name}" (type:Exec) {
-            description = "Building a native toolchain to compile nodejs-mobile native modules for ${abi_name}."
-            executable = "${ndk_bundle_path}/build/tools/make-standalone-toolchain.sh"
-            args "--toolchain=${temp_toolchain_name}-${temp_cc_ver}", "--arch=${temp_arch}", "--install-dir=${standalone_toolchain}", "--stl=libc++", "--force", "--platform=android-${_compileNativeModulesSdkVersion}"
-            outputs.dir "${standalone_toolchain}"
-        }
-
         task "BuildNpmModules${abi_name}" (type:Exec) {
             dependsOn "CopyNodeProjectAssets${abi_name}"
-            dependsOn "MakeToolchain${abi_name}"
             description = "Building native modules for ${abi_name}."
             inputs.file "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/copy.timestamp"
             outputs.dir "${rootProject.buildDir}/nodejs-native-assets-temp-build/nodejs-native-assets-${abi_name}/nodejs-project/"
@@ -398,7 +398,7 @@ if ("1".equals(shouldRebuildNativeModules)) {
             environment ("CARGO_TARGET_${cargo_target_triple}_AR", "${npm_toolchain_ar}")
             environment ("CARGO_TARGET_${cargo_target_triple}_LINKER", "${npm_toolchain_link}")
 
-            environment ('TOOLCHAIN',"${standalone_toolchain}")
+            environment ('TOOLCHAIN',"${toolchain_path}")
             environment ('AR',"${npm_toolchain_ar}")
             environment ('CC',"${npm_toolchain_cc}")
             environment ('CXX',"${npm_toolchain_cxx}")
