@@ -280,7 +280,7 @@ Returns a writable path used for persistent data storage in the application. Its
 ### Channel callback: <code>function(arg)</code>
 | Name | Type |
 | --- | --- |
-| arg | any JS type that can be serialized with `JSON.stringify` and deserialized with `JSON.parse` |
+| arg | any JS type that can be serialized with `JSON.stringify` and deserialized with [`JSON.parse`](https://www.scaler.com/topics/javascript/parse-json-javascript/) |
 
 The messages sent through the channel can be of any type that can be correctly serialized with [`JSON.stringify`](https://www.w3schools.com/js/js_json_stringify.asp) on one side and deserialized with [`JSON.parse`](https://www.w3schools.com/js/js_json_parse.asp) on the other side, as it is what the channel does internally. This means that passing JS dates through the channel will convert them to strings and functions will be removed from their containing objects. In line with [The JSON Data Interchange Syntax Standard](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf), the channel supports sending messages that are composed of these JS types: `Boolean`, `Number`, `String`, `Object`, `Array`.
 
