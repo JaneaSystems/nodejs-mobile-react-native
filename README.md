@@ -8,7 +8,7 @@ https://github.com/nodejs-mobile
 
 ## Reporting Issues
 
-We have a [central repo](https://github.com/janeasystems/nodejs-mobile/issues) where we manage all the issues related to Node.js for Mobile Apps, including issues specific to this plugin. Please, report your issue [there](https://github.com/janeasystems/nodejs-mobile/issues).
+We have a [central repo](https://github.com/janeasystems/nodejs-mobile/issues) where we manage all the issues related to [Node.js](https://www.interviewbit.com/node-js-interview-questions/) for Mobile Apps, including issues specific to this plugin. Please, report your issue [there](https://github.com/janeasystems/nodejs-mobile/issues).
 
 ## Installation
 
